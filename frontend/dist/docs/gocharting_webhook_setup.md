@@ -2,7 +2,7 @@
 
 ## Overview
 
-GoCharting is a professional HTML5 charting platform optimized for Indian markets. With a **Premium Plan**, you can set up webhook alerts to automate your trading strategies with OpenAlgo.
+GoCharting is a professional HTML5 charting platform optimized for Indian markets. With a **Premium Plan**, you can set up webhook alerts to automate your trading strategies with FastAlgo.
 
 ---
 
@@ -12,9 +12,9 @@ GoCharting is a professional HTML5 charting platform optimized for Indian market
 - Webhook alerts are only available on the **GoCharting Premium Plan**
 - Subscribe at [GoCharting](https://gocharting.com) to access webhook features
 
-### 2. OpenAlgo Setup
-- OpenAlgo instance running and accessible
-- API key configured in OpenAlgo
+### 2. FastAlgo Setup
+- FastAlgo instance running and accessible
+- API key configured in FastAlgo
 - Broker connected and authenticated
 
 ### 3. Public URL Configuration
@@ -29,7 +29,7 @@ If you have a custom domain or server:
 
 #### Option B: Local Development with Tunneling
 
-If you're running OpenAlgo locally (on your computer) and want to test webhooks, you'll need to expose your local server to the internet using a tunneling service.
+If you're running FastAlgo locally (on your computer) and want to test webhooks, you'll need to expose your local server to the internet using a tunneling service.
 
 **Popular Tunneling Services:**
 - **DevTunnel** (Microsoft) - Good for Visual Studio users
@@ -38,10 +38,10 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
 - **Cloudflare Tunnel** - Enterprise-grade option
 
 **How Tunneling Works:**
-1. Your local OpenAlgo runs on `http://localhost:5000`
+1. Your local FastAlgo runs on `http://localhost:5000`
 2. Tunneling service creates a public URL pointing to your local server
 3. GoCharting can send webhooks to this public URL
-4. The tunnel forwards requests to your local OpenAlgo
+4. The tunnel forwards requests to your local FastAlgo
 
 **Typical URL Formats:**
 - DevTunnel: `https://abc123.devtunnels.ms`
@@ -50,15 +50,15 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
 
 **Setup Steps:**
 1. Install and configure your chosen tunneling service
-2. Start the tunnel pointing to port 5000 (OpenAlgo's default port)
+2. Start the tunnel pointing to port 5000 (FastAlgo's default port)
 3. Copy the public URL provided by the tunneling service
 4. Update your `.env` file:
    ```env
    HOST_SERVER=https://your-tunnel-url.com
    ```
-5. Restart OpenAlgo application
+5. Restart FastAlgo application
 
-⚠️ **Important Notes:**
+**Important Notes:**
 - Tunnel URLs may change each time you restart (unless using paid plans)
 - Free tier tunnels may have bandwidth/time limitations
 - Update the webhook URL in GoCharting if your tunnel URL changes
@@ -70,8 +70,8 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
 
 ### Step 1: Generate Webhook Configuration
 
-1. **Login to OpenAlgo**
-   - Navigate to your OpenAlgo dashboard
+1. **Login to FastAlgo**
+   - Navigate to your FastAlgo dashboard
    - Go to **Platforms** from the main navigation menu
 
 2. **Open GoCharting Configuration**
@@ -175,12 +175,12 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
 5. **Configure Delivery Methods**
 
    Enable/disable notification methods as needed:
-   - ☑️ **Popup**: Visual popup in GoCharting
-   - ☑️ **Sound**: Audio notification (select sound)
-   - ☑️ **In-app Push**: Mobile app notification
-   - ☑️ **Webhook**: Enable this for OpenAlgo integration
+   - **Popup**: Visual popup in GoCharting
+   - **Sound**: Audio notification (select sound)
+   - **In-app Push**: Mobile app notification
+   - **Webhook**: Enable this for FastAlgo integration
 
-   **Webhook URL**: Paste your OpenAlgo webhook URL
+ **Webhook URL**: Paste your FastAlgo webhook URL
    ```
    https://yourdomain.com/api/v1/placeorder
    ```
@@ -192,25 +192,25 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
 
 ---
 
-## ⚠️ IMPORTANT: Testing Workflow
+## IMPORTANT: Testing Workflow
 
 ### Before Testing - Enable Sandbox Mode
 
 **ALWAYS test your webhooks in Sandbox mode before using them in live trading environments!**
 
-1. **Enable Sandbox Mode in OpenAlgo**
+1. **Enable Sandbox Mode in FastAlgo**
    - Look for the **Sandbox toggle** in the navbar (top navigation bar)
    - Click the toggle to enable Sandbox mode
    - Configure your sandbox settings if needed
    - Sandbox mode is now active
 
 2. **Why Use Sandbox Mode?**
-   - ✅ Test without risking real money
-   - ✅ Verify webhook configuration is correct
-   - ✅ Debug payload structure
-   - ✅ Check symbol mapping
-   - ✅ Validate alert triggers
-   - ✅ Ensure broker API connectivity
+   - Test without risking real money
+   - Verify webhook configuration is correct
+   - Debug payload structure
+   - Check symbol mapping
+   - Validate alert triggers
+   - Ensure broker API connectivity
 
 3. **Testing Progression**
    ```
@@ -219,7 +219,7 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
    Step 3: Live Mode    → Execute real trades (with small quantities)
    ```
 
-⚠️ **WARNING**: Never test directly in live mode. Always follow the testing progression above to avoid:
+**WARNING**: Never test directly in live mode. Always follow the testing progression above to avoid:
 - Accidental real trades
 - Financial losses during testing
 - Multiple unwanted orders
@@ -231,9 +231,9 @@ If you're running OpenAlgo locally (on your computer) and want to test webhooks,
 
 ### Method 1: Test in Analyze Mode (Recommended First Step)
 
-1. Enable **Analyze Mode** in OpenAlgo (toggle in navbar)
+1. Enable **Analyze Mode** in FastAlgo (toggle in navbar)
 2. Create a test alert in GoCharting with a condition that will trigger immediately
-3. Check the **API Analyzer** in OpenAlgo to see the incoming request
+3. Check the **API Analyzer** in FastAlgo to see the incoming request
 4. Verify the payload structure and response
 5. **No actual orders will be placed in Analyze Mode**
 
@@ -275,7 +275,7 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
 
 ### Method 5: Live Testing with Small Quantities
 
-⚠️ **Only after successful testing in Analyze and Sandbox modes:**
+**Only after successful testing in Analyze and Sandbox modes:**
 
 1. Disable Analyze Mode and Sandbox Mode
 2. Start with **minimal quantities** (e.g., 1 share)
@@ -290,7 +290,7 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
 
 ```json
 {
-  "apikey": "your_api_key_here",      // Your OpenAlgo API key
+  "apikey": "your_api_key_here",      // Your FastAlgo API key
   "strategy": "GoCharting",            // Strategy identifier
   "symbol": "SAIL",                    // Trading symbol
   "action": "BUY",                     // BUY or SELL
@@ -305,7 +305,7 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
 
 | Field | Required | Description | Valid Values |
 |-------|----------|-------------|--------------|
-| apikey | Yes | Your OpenAlgo API key | String |
+| apikey | Yes | Your FastAlgo API key | String |
 | strategy | Yes | Strategy name for logging | Any string |
 | symbol | Yes | Trading instrument | Valid symbol |
 | action | Yes | Buy or Sell | BUY, SELL |
@@ -376,21 +376,21 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
 1. Verify your GoCharting Premium subscription is active
 2. Check webhook URL is correct and accessible
 3. Test the URL with cURL or Postman
-4. Ensure OpenAlgo is running and accessible from internet
+4. Ensure FastAlgo is running and accessible from internet
 
 ### Issue: Orders not placing
 
 **Solutions:**
 1. Verify API key is correct in the JSON payload
-2. Check broker connection in OpenAlgo dashboard
+2. Check broker connection in FastAlgo dashboard
 3. Verify sufficient funds in trading account
 4. Check symbol format matches your broker's convention
-5. Review logs in OpenAlgo (Logs menu)
+5. Review logs in FastAlgo (Logs menu)
 
 ### Issue: "API key not found" error
 
 **Solutions:**
-1. Go to OpenAlgo → API Key section
+1. Go to FastAlgo → API Key section
 2. Generate or verify your API key
 3. Copy the correct API key to your webhook JSON
 4. Regenerate the configuration in GoCharting page
@@ -412,11 +412,11 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
    - Stop the current tunnel
    - Start a new tunnel session
    - Update `.env` with the new URL
-   - Restart OpenAlgo
+   - Restart FastAlgo
 
 4. **Test tunnel accessibility**
    - Open the tunnel URL in your browser
-   - You should see OpenAlgo login page
+   - You should see FastAlgo login page
    - If not accessible, check firewall/network settings
 
 ### Issue: Invalid symbol error
@@ -442,13 +442,13 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
 - For production, ensure SSL certificate is valid
 
 ### 3. Monitor Activity
-- Regularly check order logs in OpenAlgo
+- Regularly check order logs in FastAlgo
 - Use Analyze Mode to debug webhook payloads
 - Review Traffic Monitor for unusual activity
 
 ### 4. Test in Sandbox/Sandbox Trading
 
-⚠️ **CRITICAL**: Always test in sandbox mode before live trading!
+**CRITICAL**: Always test in sandbox mode before live trading!
 
 **Recommended Testing Workflow:**
 1. **Analyze Mode**: Test payload structure without placing orders
@@ -457,12 +457,12 @@ curl -X POST https://yourdomain.com/api/v1/placeorder \
 4. **Full Trading**: Deploy with actual quantities
 
 **Never Skip Steps:**
-- ❌ Don't test directly in live mode
-- ❌ Don't use large quantities for initial testing
-- ❌ Don't deploy without monitoring first few trades
-- ✅ Always follow the testing progression
-- ✅ Monitor logs during initial deployment
-- ✅ Keep alerts paused until fully tested
+- Don't test directly in live mode
+- Don't use large quantities for initial testing
+- Don't deploy without monitoring first few trades
+- Always follow the testing progression
+- Monitor logs during initial deployment
+- Keep alerts paused until fully tested
 
 ---
 
@@ -514,7 +514,7 @@ Create separate alerts for entry, target, and stop loss:
 
 ## Rate Limits
 
-OpenAlgo has rate limiting to prevent abuse:
+FastAlgo has rate limiting to prevent abuse:
 - Default: 10 requests per second for placeorder API
 - Configurable via `ORDER_RATE_LIMIT` in .env file
 
@@ -527,16 +527,11 @@ If you hit rate limits:
 
 ## Support & Resources
 
-### Documentation
-- OpenAlgo Docs: https://docs.openalgo.in
+### FastAlgo support
+- Help with webhooks, alerts or your strategy: https://www.tinycompute.site
+
+### GoCharting
 - GoCharting Help: https://gocharting.com/help
-
-### Community
-- OpenAlgo GitHub: https://github.com/marketcalls/openalgo
-- Report Issues: https://github.com/marketcalls/openalgo/issues
-
-### Video Tutorials
-- Check OpenAlgo YouTube channel for video guides
 - GoCharting tutorials for alert setup
 
 ---
@@ -567,11 +562,11 @@ A: Your alerts won't trigger. Restart the tunnel and update the webhook URL in G
 A: No, you need to create separate alerts for BUY and SELL with different configurations.
 
 **Q: How do I know if my webhook was triggered?**
-A: Check the Logs section in OpenAlgo or use the API Analyzer in Analyze Mode.
+A: Check the Logs section in FastAlgo or use the API Analyzer in Analyze Mode.
 
 **Q: Can I use limit orders instead of market orders?**
 A: Currently, the GoCharting configuration generates MARKET orders. For other order types, modify the JSON payload manually.
 
 ---
 
-**Happy Trading with GoCharting and OpenAlgo! 🚀**
+**Happy Trading with GoCharting and FastAlgo! **
