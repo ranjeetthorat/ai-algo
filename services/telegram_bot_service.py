@@ -37,15 +37,30 @@ from database.telegram_db import (
     log_command,
     update_bot_config,
 )
-from utils import real_threading
+from utils import brand, real_threading
 from utils.constants import CRYPTO_BROKERS
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 
+def _md(text: str) -> str:
+    """Escape text for Telegram legacy Markdown, used outside an entity."""
+    for ch in ("_", "*", "`", "["):
+        text = text.replace(ch, "\\" + ch)
+    return text
+
+
+def _connect_failed_text() -> str:
+    """Plain-text reply when no SDK client can be built for this user."""
+    return (
+        f"Could not connect to {brand.display_name()}. "
+        "Link your account again with /link, then try once more."
+    )
+
+
 class TelegramBotService:
-    """Service class for managing Telegram bot operations with OpenAlgo SDK integration"""
+    """Service class for managing Telegram bot operations with openalgo SDK integration"""
 
     def __init__(self):
         self.application = None
@@ -55,11 +70,11 @@ class TelegramBotService:
         self.http_client = None  # Will be created in thread
         self.bot_thread = None
         self.bot_loop = None  # Store the bot's event loop
-        self.sdk_clients = {}  # Cache for OpenAlgo SDK clients per user
+        self.sdk_clients = {}  # Cache for openalgo SDK clients per user
         self._stop_event = original_threading.Event()  # Thread-safe stop signal
 
     def _get_sdk_client(self, telegram_id: int) -> openalgo_api | None:
-        """Get or create OpenAlgo SDK client for a user"""
+        """Get or create an openalgo SDK client for a user"""
         from openalgo import api as openalgo_api
 
         try:
@@ -879,14 +894,14 @@ class TelegramBotService:
 
         if telegram_user:
             await update.message.reply_text(
-                f"Welcome back, {user.first_name}! \n\n"
+                f"Welcome back, {user.first_name}!\n\n"
                 "Your account is linked. Use /menu to see available options.",
                 parse_mode=ParseMode.MARKDOWN,
             )
         else:
             await update.message.reply_text(
-                f"Welcome to OpenAlgo Bot, {user.first_name}! \n\n"
-                "To get started, link your OpenAlgo account:\n"
+                f"Welcome to {_md(brand.display_name())}, {user.first_name}!\n\n"
+                f"To get started, link your {_md(brand.display_name())} account:\n"
                 "`/link <api_key> <host_url>`\n\n"
                 "Example:\n"
                 "`/link your_api_key_here http://127.0.0.1:5000`\n\n"
@@ -900,11 +915,11 @@ class TelegramBotService:
         """Handle /help command"""
         from telegram.constants import ParseMode
 
-        help_text = """
+        help_text = f"""
 *Available Commands:*
 
 *Account Management:*
-/link `<api_key> <host_url>` - Link your OpenAlgo account
+/link `<api_key> <host_url>` - Link your {_md(brand.display_name())} account
 /unlink - Unlink your account
 /status - Check connection status
 
@@ -996,7 +1011,7 @@ class TelegramBotService:
 
                 # Log for debugging
                 logger.info(
-                    f"Linking Telegram user {user.id} (@{user.username}) with OpenAlgo username: '{openalgo_username}'"
+                    f"Linking Telegram user {user.id} (@{user.username}) with platform username: '{openalgo_username}'"
                 )
 
                 # If we still can't get username, DON'T use telegram username with @
@@ -1005,10 +1020,10 @@ class TelegramBotService:
                     # Try to get from session or use telegram ID
                     openalgo_username = f"user_{user.id}"
                     logger.warning(
-                        f"Could not get OpenAlgo username, using fallback: {openalgo_username}"
+                        f"Could not get platform username, using fallback: {openalgo_username}"
                     )
                 else:
-                    logger.info(f"Successfully retrieved OpenAlgo username: {openalgo_username}")
+                    logger.info(f"Successfully retrieved platform username: {openalgo_username}")
 
                 # Determine broker for currency symbol selection
                 broker_name = get_broker_name(api_key) or "default"
@@ -1016,7 +1031,7 @@ class TelegramBotService:
 
                 create_or_update_telegram_user(
                     telegram_id=user.id,
-                    username=openalgo_username,  # Use the actual OpenAlgo username
+                    username=openalgo_username,  # Use the actual platform username
                     telegram_username=user.username,
                     first_name=user.first_name,
                     last_name=user.last_name,
@@ -1112,7 +1127,7 @@ class TelegramBotService:
             )
         else:
             await update.message.reply_text(
-                "No linked account found.\nUse /link to connect your OpenAlgo account.",
+                f"No linked account found.\nUse /link to connect your {_md(brand.display_name())} account.",
                 parse_mode=ParseMode.MARKDOWN,
             )
 
@@ -1134,7 +1149,7 @@ class TelegramBotService:
         # Get orderbook using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1262,7 +1277,7 @@ class TelegramBotService:
         # Get tradebook using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1350,7 +1365,7 @@ class TelegramBotService:
         # Get positions using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1446,7 +1461,7 @@ class TelegramBotService:
         # Get holdings using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1547,7 +1562,7 @@ class TelegramBotService:
         # Get funds using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1607,7 +1622,7 @@ class TelegramBotService:
         # Get P&L from funds using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1650,7 +1665,7 @@ class TelegramBotService:
         # Get quote using SDK
         client = self._get_sdk_client(user.id)
         if not client:
-            await update.message.reply_text("Failed to connect to OpenAlgo")
+            await update.message.reply_text(_connect_failed_text())
             return
 
         loop = asyncio.get_event_loop()
@@ -1851,7 +1866,7 @@ class TelegramBotService:
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(
-            "*OpenAlgo Trading Menu*\nSelect an option below:",
+            f"*Trading Menu*\n{_md(brand.display_name())}: select an option below.",
             reply_markup=reply_markup,
             parse_mode=ParseMode.MARKDOWN,
         )
@@ -2196,7 +2211,7 @@ class TelegramBotService:
 
             client = self._get_sdk_client(user.id)
             if not client:
-                await query.edit_message_text("Failed to connect to OpenAlgo")
+                await query.edit_message_text(_connect_failed_text())
                 return
 
             await query.edit_message_text("Closing all positions...")
@@ -2236,7 +2251,7 @@ class TelegramBotService:
 
             client = self._get_sdk_client(user.id)
             if not client:
-                await query.edit_message_text("Failed to connect to OpenAlgo")
+                await query.edit_message_text(_connect_failed_text())
                 return
 
             await query.edit_message_text("Closing all positions and stopping strategies...")
@@ -2474,7 +2489,7 @@ class TelegramBotService:
 
                 timestamp = datetime.now().strftime("%H:%M:%S")
                 await query.edit_message_text(
-                    f"*OpenAlgo Trading Menu*\nSelect an option below:\n_Updated: {timestamp}_",
+                    f"*Trading Menu*\n{_md(brand.display_name())}: select an option below.\n_Updated: {timestamp}_",
                     reply_markup=reply_markup,
                     parse_mode=ParseMode.MARKDOWN,
                 )
@@ -2495,7 +2510,7 @@ class TelegramBotService:
 
         client = self._get_sdk_client(user.id)
         if not client:
-            await context.bot.send_message(chat_id=chat_id, text="Failed to connect to OpenAlgo")
+            await context.bot.send_message(chat_id=chat_id, text=_connect_failed_text())
             return
 
         # Map callback data to API calls and formatters

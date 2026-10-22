@@ -48,6 +48,16 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
+      // Per-instance brand override and client logos, served by Flask
+      // (blueprints/react_app.py) so white-labelling needs no rebuild.
+      '/brand-config.js': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/custom-brand': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
     },
   },
   build: {

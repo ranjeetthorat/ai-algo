@@ -188,7 +188,9 @@ export const useThemeStore = create<ThemeStore>()(
             // Live mode - apply light/dark preference
             document.documentElement.classList.toggle('dark', state.mode === 'dark')
           }
-          document.documentElement.setAttribute('data-theme', state.color)
+          // FastAlgo has one brand palette (decision Q2): the accent picker is
+          // gone, so an accent saved before the rebrand must not override it.
+          document.documentElement.setAttribute('data-theme', 'zinc')
         }
       },
     }

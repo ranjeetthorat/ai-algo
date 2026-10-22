@@ -19,6 +19,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { adminApi } from '@/api/admin'
+import { BRAND } from '@/brand/brand'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -234,8 +235,9 @@ export default function Diagnostics() {
 
       <p className="text-sm text-muted-foreground">
         Use this page to troubleshoot issues. Click{' '}
-        <span className="font-semibold">Download .md</span> and attach it when asking for help on
-        the OpenAlgo community — secrets and tokens are never included.
+        <span className="font-semibold">Download .md</span> and attach it when asking your{' '}
+        {BRAND.displayName} support team ({BRAND.makerName}) for help. Secrets and tokens are never
+        included.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -317,8 +319,8 @@ export default function Diagnostics() {
         {/* Build */}
         <Section icon={Settings} title="Build">
           <div>
-            <KV label="OpenAlgo" value={info?.build.openalgo_version} />
-            <KV label="OpenAlgo SDK" value={info?.build.openalgo_sdk_version} />
+            <KV label={`${BRAND.displayName} version`} value={info?.build.openalgo_version} />
+            <KV label="openalgo Python library" value={info?.build.openalgo_sdk_version} />
             <KV label="Git branch" value={info?.build.git_branch} />
             <KV label="Git commit" value={info?.build.git_commit} />
             <KV label="Frontend build" value={info?.build.frontend_build_time} />

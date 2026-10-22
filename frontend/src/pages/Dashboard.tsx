@@ -1,6 +1,7 @@
-import { BarChart3, BookOpen, FileText, GraduationCap, Search, Zap } from 'lucide-react'
+import { BarChart3, BookOpen, FileText, Search, Zap } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { BRAND } from '@/brand/brand'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { useOrderEventRefresh } from '@/hooks/useOrderEventRefresh'
@@ -204,7 +205,7 @@ export default function Dashboard() {
   const quickAccessCards = [
     {
       href: '/search',
-      label: 'OpenAlgo Symbols',
+      label: `${BRAND.displayName} Symbols`,
       description: 'Universal symbology across brokers',
       icon: Search,
       gradient: 'from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10',
@@ -224,9 +225,9 @@ export default function Dashboard() {
       borderColor: 'border-violet-500/20 hover:border-violet-500/40',
     },
     {
-      href: 'https://docs.openalgo.in',
-      label: 'Documentation',
-      description: 'Tutorials, API docs & features',
+      href: BRAND.supportUrl,
+      label: 'Get support',
+      description: `Help with setup and use, from ${BRAND.makerName}`,
       icon: BookOpen,
       gradient: 'from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10',
       iconBg: 'bg-cyan-500/20',
@@ -243,17 +244,6 @@ export default function Dashboard() {
       iconBg: 'bg-green-500/20',
       iconColor: 'text-green-500',
       borderColor: 'border-green-500/20 hover:border-green-500/40',
-    },
-    {
-      href: 'https://www.openalgo.in/learn',
-      label: 'OpenVarsity',
-      description: 'Learn algo trading with OpenAlgo',
-      icon: GraduationCap,
-      gradient: 'from-blue-500/10 to-blue-500/5 hover:from-blue-500/20 hover:to-blue-500/10',
-      iconBg: 'bg-blue-500/20',
-      iconColor: 'text-blue-500',
-      borderColor: 'border-blue-500/20 hover:border-blue-500/40',
-      external: true,
     },
     {
       href: '/logs/latency',
@@ -305,7 +295,9 @@ export default function Dashboard() {
       {/* Dashboard Header */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
         <div className="flex-1">
-          <h1 className="text-2xl md:text-3xl font-bold">Trading Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">
+            <span className="text-brand">{BRAND.displayName}</span> Trading Dashboard
+          </h1>
           <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
             Overview of your trading account and market positions
           </p>

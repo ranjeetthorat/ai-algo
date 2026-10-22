@@ -216,7 +216,7 @@ class SymbolsToolkit(OpenAlgoToolkit):
         yourself: an index expiry is not the last Thursday of the month any
         more, and a strike ladder is not evenly spaced everywhere.
 
-        Every whitespace-separated term must match, against the OpenAlgo symbol,
+        Every whitespace-separated term must match, against the FastAlgo symbol,
         the broker symbol, the instrument name or the strike. ``NIFTY 20800 CE``
         is a good query. A sentence is not.
 
@@ -318,7 +318,7 @@ class SymbolsToolkit(OpenAlgoToolkit):
         those; do not adjust an expiry or a strike yourself to make one fit.
 
         Args:
-            symbol: The exact OpenAlgo symbol, for example ``RELIANCE``,
+            symbol: The exact FastAlgo symbol, for example ``RELIANCE``,
                 ``BANKNIFTY24APR24FUT`` or ``NIFTY28MAR2420800CE``. Get it from
                 search_symbols rather than composing it.
             exchange: Exchange code the contract is listed on. One of NSE, BSE,
@@ -337,7 +337,7 @@ class SymbolsToolkit(OpenAlgoToolkit):
         text = self._require_text(
             "symbol",
             symbol,
-            "Pass one exact OpenAlgo symbol, such as 'RELIANCE' or 'NIFTY28MAR2420800CE'. "
+            "Pass one exact FastAlgo symbol, such as 'RELIANCE' or 'NIFTY28MAR2420800CE'. "
             "Use search_symbols to find it.",
         )
         venue = self._exchange(exchange, allow_blank=False)
@@ -458,7 +458,7 @@ class SymbolsToolkit(OpenAlgoToolkit):
                 "count": len(entries),
                 "expiries": entries,
                 "note": (
-                    "symbol_expiry is the date segment of the OpenAlgo symbol. The strike is "
+                    "symbol_expiry is the date segment of the FastAlgo symbol. The strike is "
                     "not derivable the same way, so confirm the full contract with "
                     "search_symbols before using it."
                 ),
@@ -513,7 +513,7 @@ class SymbolsToolkit(OpenAlgoToolkit):
         if text not in ALL_EXCHANGES:
             self.invalid_argument(
                 "exchange",
-                f"{text!r} is not an OpenAlgo exchange code.",
+                f"{text!r} is not a FastAlgo exchange code.",
                 f"Pass one of: {', '.join(sorted(ALL_EXCHANGES))}.",
             )
         return text

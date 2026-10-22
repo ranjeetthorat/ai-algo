@@ -2,6 +2,7 @@ import { ArrowLeft, Check, Eye, EyeOff, Key, Save, Settings } from 'lucide-react
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { webClient } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -197,11 +198,7 @@ export default function TelegramConfig() {
 
       {/* Save Button and Documentation */}
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-        <a
-          href="https://docs.openalgo.in/trading-platform/telegram"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={BRAND.supportUrl} target="_blank" rel="noopener noreferrer">
           <Button variant="outline" className="w-full sm:w-auto">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -211,7 +208,7 @@ export default function TelegramConfig() {
             >
               <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
             </svg>
-            View Documentation
+            Get support
           </Button>
         </a>
         <Button onClick={handleSave} disabled={isSaving}>
@@ -228,16 +225,16 @@ export default function TelegramConfig() {
         <CardContent className="space-y-4">
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
             <p className="text-sm">
-              <span className="font-semibold">Need detailed instructions?</span> Visit our complete{' '}
+              <span className="font-semibold">Need help setting up the bot?</span>{' '}
               <a
-                href="https://docs.openalgo.in/trading-platform/telegram"
+                href={BRAND.supportUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline font-semibold"
               >
-                Telegram Bot Setup Guide
+                Get support
               </a>{' '}
-              for step-by-step instructions with screenshots.
+              and we will walk you through it.
             </p>
           </div>
 

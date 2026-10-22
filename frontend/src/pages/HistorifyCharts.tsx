@@ -16,6 +16,7 @@ import { ArrowLeft, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { historifyApi, historifyError } from '@/api/historify'
+import { BRAND } from '@/brand/brand'
 import { ChartGrid, ChartLayoutPicker } from '@/components/chart/ChartGrid'
 import { HistorifyChartPane, type PaneState } from '@/components/historify/HistorifyChartPane'
 import { Navbar } from '@/components/layout/Navbar'
@@ -122,7 +123,7 @@ export default function HistorifyCharts() {
     showToast.error(
       historifyError(
         catalog.error,
-        'Your downloaded data could not be listed. Reload the page, and check that OpenAlgo is still running if it keeps failing.'
+        `Your downloaded data could not be listed. Reload the page, and check that ${BRAND.displayName} is still running if it keeps failing.`
       ),
       'historify'
     )

@@ -16,6 +16,7 @@ import {
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { adminApi } from '@/api/admin'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -440,8 +441,8 @@ export default function RemoteMcp() {
                 placeholder="https://yourdomain.com"
               />
               <p className="text-xs text-muted-foreground">
-                Same as your OpenAlgo dashboard URL. Required when MCP is enabled. Used as the JWT
-                issuer / audience claim — tokens are scoped to this exact origin.
+                Same as your {BRAND.displayName} dashboard URL. Required when MCP is enabled. Used
+                as the JWT issuer / audience claim — tokens are scoped to this exact origin.
               </p>
             </div>
 

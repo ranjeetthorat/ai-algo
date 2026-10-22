@@ -1,5 +1,6 @@
-import { BookOpen, Download, HelpCircle, Home, LogIn } from 'lucide-react'
+import { Download, HelpCircle, Home, LifeBuoy, LogIn } from 'lucide-react'
 import { Link } from 'react-router'
+import { BRAND } from '@/brand/brand'
 import { Button } from '@/components/ui/button'
 
 export default function NotFound() {
@@ -20,7 +21,7 @@ export default function NotFound() {
         </div>
 
         <h1 className="text-5xl font-bold mb-4">
-          <span className="text-primary">404</span> - Page Not Found
+          <span className="text-brand">404</span> - Page Not Found
         </h1>
 
         <p className="text-xl text-muted-foreground mb-8">
@@ -57,9 +58,9 @@ export default function NotFound() {
         {/* Quick Links */}
         <div className="flex flex-wrap justify-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <a href="https://docs.openalgo.in" target="_blank" rel="noopener noreferrer">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Documentation
+            <a href={BRAND.supportUrl} target="_blank" rel="noopener noreferrer">
+              <LifeBuoy className="h-4 w-4 mr-2" />
+              Get support
             </a>
           </Button>
           <Button variant="ghost" size="sm" asChild>

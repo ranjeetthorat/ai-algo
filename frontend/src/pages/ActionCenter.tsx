@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { io, type Socket } from 'socket.io-client'
 import { webClient } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -358,7 +359,7 @@ export default function ActionCenterPage() {
       {/* Info Alert */}
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>OpenAlgo Action Center</AlertTitle>
+        <AlertTitle>{BRAND.displayName} Action Center</AlertTitle>
         <AlertDescription>
           Centralized hub for managing semi-automated trading orders. When Semi-Auto mode is enabled
           in API Key settings, all incoming orders are queued here for manual approval before broker

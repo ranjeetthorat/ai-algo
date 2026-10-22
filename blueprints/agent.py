@@ -2069,7 +2069,7 @@ def _chat_preconditions():
             None,
             None,
             _error(
-                "This deployment has no OpenAlgo API key. Generate one at /apikey "
+                "This deployment has no API key yet. Generate one at /apikey "
                 "so the agent's tools can reach the platform.",
                 409,
                 {"kind": "config"},

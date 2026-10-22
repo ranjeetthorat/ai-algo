@@ -66,7 +66,7 @@ Field                Source
 ===================  ==================================================
 ``symbol``           the operator's selection, or ``positionbook_service``
 ``exchange``         ``symbol_service.get_symbol_info`` (the master row)
-``segment``          the OpenAlgo symbol's own suffix, confirmed by the master
+``segment``          the FastAlgo symbol's own suffix, confirmed by the master
 ``side``             the operator's selection, or the sign of the held quantity
 ``lots``             the operator's selection, or held quantity / lot size
 ``lotSize``          ``symbol_service.get_symbol_info``
@@ -488,7 +488,7 @@ def leg_symbol(entry: Any, position: int, underlying: str, expiry: str) -> tuple
                 "legs",
                 f"leg {position} is {symbol!r}, which is a strike and a right with no contract "
                 "in front of it",
-                "Either pass the whole OpenAlgo symbol, such as 'NIFTY08SEP2623850CE', or set "
+                "Either pass the whole FastAlgo symbol, such as 'NIFTY08SEP2623850CE', or set "
                 "underlying and expiry_date on this call so the shorthand can be expanded.",
             )
         strike = shorthand.group(1)
@@ -500,7 +500,7 @@ def leg_symbol(entry: Any, position: int, underlying: str, expiry: str) -> tuple
         invalid_argument(
             "legs",
             f"leg {position} names no symbol",
-            "Pass the OpenAlgo symbol of each contract, for example 'NIFTY08SEP2623850CE'.",
+            "Pass the FastAlgo symbol of each contract, for example 'NIFTY08SEP2623850CE'.",
         )
     return symbol, exchange
 
@@ -556,7 +556,7 @@ def _resolve_leg_exchange(symbol: str, exchange: str, where: str) -> str:
 
 
 def _segment_of(symbol: str, where: str | None) -> str:
-    """Classify a contract from the OpenAlgo symbol format.
+    """Classify a contract from the FastAlgo symbol format.
 
     The format is the platform's own and is documented in ``CLAUDE.md``: an
     option ends in ``CE`` or ``PE``, a future ends in ``FUT``. Anything else is

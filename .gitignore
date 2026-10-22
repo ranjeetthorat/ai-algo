@@ -148,3 +148,7 @@ docs/audit/qa_audit/**/qa_sandbox_*.csv
 docs/audit/qa_audit/**/qa_live_*.csv
 # Excel writes a ~$-prefixed lock file next to any workbook left open.
 docs/audit/qa_audit/**/~$*
+
+# Per-instance white-label brand (brand.json and client logo). Set up per client
+# installation, never committed. See blueprints/react_app.py.
+custom_brand/

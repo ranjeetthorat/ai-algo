@@ -17,6 +17,7 @@ from database.telegram_db import (
 from limiter import limiter
 from services.telegram_alert_service import TelegramAlertService
 from services.telegram_bot_service import telegram_bot_service
+from utils import brand
 from utils.logging import get_logger
 from utils.session import check_session_validity
 
@@ -282,10 +283,13 @@ def send_test_message():
         # If no linked user found, try to send to the first available user (for admin testing)
         if not telegram_user and all_users:
             telegram_user = all_users[0]  # Use first available user for testing
-            message = f"Test Message from OpenAlgo (Admin: {username})\n\nYour Telegram integration is working correctly!"
+            message = (
+                f"Test message from {brand.display_name()} (admin: {username})\n\n"
+                "Your Telegram integration is working."
+            )
         elif telegram_user:
             message = (
-                "Test Message from OpenAlgo\n\nYour Telegram integration is working correctly!"
+                f"Test message from {brand.display_name()}\n\nYour Telegram integration is working."
             )
         else:
             return jsonify(

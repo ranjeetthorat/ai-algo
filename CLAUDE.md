@@ -7,8 +7,12 @@ read them from the repo.
 
 ## Overview
 
-OpenAlgo is a production algorithmic trading platform: Flask backend, React 19
-frontend. It is **several products in one self-hosted instance**, all sharing a
+**FastAlgo** is a production algorithmic trading platform: Flask backend, React 19
+frontend. It is a **hard fork of OpenAlgo** (forked at 2.0.2.5), made and supported
+by TinyCompute, which installs and maintains it for each client. Many internal
+names still say `openalgo` (the Python SDK, `openalgo-charts`, modules, env
+variables, storage keys); they stay as they are. See "Branding and the hard fork"
+below. It is **several products in one self-hosted instance**, all sharing a
 single broker session and WebSocket feed:
 
 | Surface | Route | Purpose |
@@ -24,8 +28,38 @@ single broker session and WebSocket feed:
 All surfaces share the Sandbox engine (1 Crore sandbox capital, exchange-aligned
 auto square-off) and support Telegram alerts.
 
-Repository: https://github.com/marketcalls/openalgo
-Documentation: https://docs.openalgo.in
+Repository: https://github.com/ranjeetthorat/ai-algo
+Product site: https://fastalgo.tinycompute.site (support: https://www.tinycompute.site)
+
+## Branding and the hard fork
+
+- **No upstream merges.** OpenAlgo changes are watched by hand and any fix we
+  want is written here ourselves. Never propose merging or syncing from
+  `marketcalls/openalgo`, and never link users to OpenAlgo's docs, site,
+  community or repository.
+- **The rebrand is UI-only.** User-visible text, logos, colours and links
+  changed. Package names, imports, the `openalgo` SDK, `openalgo-charts`, routes,
+  `/api/v1/` paths, webhook formats, env variables, database names and
+  localStorage keys did not, and must not, because client scripts and alerts
+  depend on them.
+- **One source for the brand.** Frontend: `frontend/src/brand/brand.ts`
+  (`BRAND.displayName` for the shown name, `BRAND.supportUrl` for every help
+  link, `CHART_BRANDING` for every `openalgo-charts` chart, whose library
+  otherwise draws OpenAlgo's mark). Backend: `utils/brand.py`
+  (`brand.display_name()`, `brand.email_signature()`). Never hard-code a product
+  name.
+- **White-label per client.** `custom_brand/brand.json` (gitignored) overrides the
+  display name and logo for one installation, served as `/brand-config.js`.
+  Product name, attribution and source link never change.
+- **AGPL attribution stays.** `NOTICE`, `License.md`, upstream copyright headers
+  and the `/about` page (the source-code offer for network users) must remain.
+  `brand.ts` and `About.tsx` are the only frontend files allowed to name OpenAlgo.
+- **`node scripts/brand-check.mjs` must report zero** before a release. It lists
+  visible OpenAlgo text and upstream links that would reach a user.
+- **Design language**: `docs/design/brand/design-language.md`. Reskin through the
+  CSS tokens in `frontend/src/index.css`; never recolour the hard-coded
+  profit/loss and buy/sell classes, or the analyzer and sandbox themes.
+- **Version** is FastAlgo's own (`utils/version.py`, from 1.0.0).
 
 ## Documentation Map
 

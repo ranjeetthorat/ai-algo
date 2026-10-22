@@ -1,0 +1,19 @@
+FastAlgo
+Copyright (C) 2026 TinyCompute (https://www.tinycompute.site)
+
+FastAlgo is a modified version of OpenAlgo
+(https://github.com/marketcalls/openalgo), forked from OpenAlgo 2.0.2.5.
+
+OpenAlgo is copyright its authors and contributors, and is licensed under the
+GNU Affero General Public License, version 3 (AGPL-3.0). FastAlgo is
+distributed under the same license; see License.md. All original copyright
+notices in the source files are retained.
+
+Source code for FastAlgo: https://github.com/ranjeetthorat/ai-algo
+
+Modifications made by TinyCompute (summary, updated per release):
+- 2026-10-17: Product branding, logo, colour theme and user-facing wording
+  (FastAlgo). Per-instance white-label support (custom_brand/).
+
+The FastAlgo wordmark is set in Manrope (SIL Open Font License 1.1,
+https://github.com/googlefonts/manrope), converted to outlines.

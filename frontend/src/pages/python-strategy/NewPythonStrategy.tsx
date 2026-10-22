@@ -13,8 +13,8 @@ import { CRYPTO_EXCHANGE_VALUE, SCHEDULE_DAYS } from '@/types/python-strategy'
 import { showToast } from '@/utils/toast'
 
 const EXAMPLE_STRATEGY = `"""
-Example OpenAlgo Strategy
-This is a minimal example showing how to use the OpenAlgo Python SDK.
+Example strategy
+This is a minimal example showing how to use the openalgo Python library.
 """
 
 import os
@@ -202,7 +202,8 @@ export default function NewPythonStrategy() {
         <Info className="h-4 w-4" />
         <AlertDescription>
           Your Python script should use the <code className="bg-muted px-1 rounded">openalgo</code>{' '}
-          SDK. Install it with: <code className="bg-muted px-1 rounded">pip install openalgo</code>
+          Python library. Install it with:{' '}
+          <code className="bg-muted px-1 rounded">pip install openalgo</code>
         </AlertDescription>
       </Alert>
 

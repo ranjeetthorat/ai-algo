@@ -651,7 +651,7 @@ def normalise_pair(symbol: Any, exchange: Any) -> tuple[str, str, list[str]]:
         invalid_argument(
             "symbol",
             "it is empty",
-            "Pass the OpenAlgo symbol in capitals, for example 'INFY' or 'NIFTY'.",
+            "Pass the FastAlgo symbol in capitals, for example 'INFY' or 'NIFTY'.",
         )
 
     cleaned_exchange = str(exchange or "").strip().upper().replace(" ", "_").replace("-", "_")
@@ -664,7 +664,7 @@ def normalise_pair(symbol: Any, exchange: Any) -> tuple[str, str, list[str]]:
     if cleaned_exchange not in VALID_EXCHANGES:
         invalid_argument(
             "exchange",
-            f"{cleaned_exchange!r} is not an OpenAlgo exchange code",
+            f"{cleaned_exchange!r} is not a FastAlgo exchange code",
             f"Pass one of: {', '.join(VALID_EXCHANGES)}.",
         )
 

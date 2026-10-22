@@ -1,16 +1,13 @@
 import {
   ArrowRight,
   Blocks,
-  BookOpen,
   Bot,
   CandlestickChart,
-  ClipboardList,
-  Download,
-  GraduationCap,
   HelpCircle,
+  LifeBuoy,
   LogIn,
   Menu,
-  MessageCircle,
+  Monitor,
   Moon,
   Server,
   ShieldCheck,
@@ -22,6 +19,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { BrandLockup } from '@/brand/BrandLockup'
+import { BRAND } from '@/brand/brand'
 import { Footer } from '@/components/layout/Footer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -51,12 +50,8 @@ const integrations = [
   'ChartInk',
   'Excel',
   'Google Sheets',
-  'OpenClaw',
   'Telegram',
 ]
-
-// Open Varsity (openalgo.in/learn) course count, shown in the hero pill.
-const VARSITY_COURSES = 13
 
 // The surfaces that share one broker session and feed inside a single
 // self-hosted instance. Counts come from the code: tools.length is the /tools
@@ -65,33 +60,33 @@ const VARSITY_COURSES = 13
 const platformDesks = [
   {
     icon: Server,
-    title: 'Self-hosted algo trading',
-    desc: 'A unified broker API and execution engine on your own server, driven from TradingView, Amibroker, ChartInk, Excel, Python or MCP.',
+    title: 'Algo trading on your own server',
+    desc: 'One broker API and order engine on your own computer or server. Send orders from TradingView, Amibroker, ChartInk, Excel, Python or an AI assistant.',
   },
   {
     icon: CandlestickChart,
     title: 'Charting platform',
-    desc: 'Chart-based trading in the built-in terminal: fire and manage orders from the chart itself, with 102 indicators on real market data.',
+    desc: 'Trade from the chart in the built-in terminal: place and manage orders on the chart itself, with 102 indicators on live market data.',
   },
   {
     icon: Blocks,
     title: 'No-code strategy builder',
-    desc: 'Flow is a drag-and-drop canvas: wire 61 node types from triggers to indicators, conditions and orders, then activate it to run on its own.',
+    desc: 'Flow is a drag-and-drop canvas: connect 61 node types, from triggers to indicators, conditions and orders, then switch it on to run by itself.',
   },
   {
     icon: Sigma,
     title: 'Options trading platform',
-    desc: `${tools.length} built-in tools: option chain, Greeks, OI tracker, max pain, vol surface, GEX, IV smile, straddles and arbitrage, plus portfolio and SIP backtesters.`,
+    desc: `${tools.length} built-in tools: option chain, Greeks, OI tracker, max pain, volatility surface, GEX, IV smile, straddles and arbitrage, plus portfolio and SIP backtesters.`,
   },
   {
     icon: Zap,
     title: 'Scalping platform',
-    desc: 'A keyboard-driven scalping terminal: arrow keys fire CE and PE orders, F6 flattens every position and F7 cancels every pending order.',
+    desc: 'A keyboard-driven scalping terminal: arrow keys place CE and PE orders, F6 closes every position and F7 cancels every pending order.',
   },
   {
     icon: ShieldCheck,
     title: 'Sandbox testing',
-    desc: 'Analyzer mode runs any strategy against real market data with 1 crore of sandbox capital and exchange-aligned auto square-off.',
+    desc: 'Analyzer mode runs any strategy on live market data with 1 crore of practice capital and auto square-off at exchange times, without sending real orders.',
   },
 ]
 
@@ -102,10 +97,8 @@ export default function Home() {
   const navLinks = [
     { href: '/', label: 'Home', internal: true },
     { href: '/faq', label: 'FAQ', internal: true },
-    { href: 'https://www.openalgo.in/learn', label: 'Varsity', internal: false },
-    { href: 'https://openalgo.in/discord', label: 'Community', internal: false },
-    { href: 'https://openalgo.in/roadmap', label: 'Roadmap', internal: false },
-    { href: 'https://docs.openalgo.in', label: 'Docs', internal: false },
+    { href: '/download', label: 'Installation', internal: true },
+    { href: BRAND.supportUrl, label: 'Get support', internal: false },
   ]
 
   return (
@@ -128,8 +121,7 @@ export default function Home() {
                   <SheetDescription>Main navigation and quick access links</SheetDescription>
                 </SheetHeader>
                 <div className="flex items-center gap-2 mb-8">
-                  <img src="/logo.png" alt="OpenAlgo" className="h-8 w-8" />
-                  <span className="text-xl font-semibold">OpenAlgo</span>
+                  <BrandLockup size="md" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Link
@@ -166,52 +158,24 @@ export default function Home() {
                     className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Download className="h-5 w-5" />
-                    Download
+                    <Monitor className="h-5 w-5" />
+                    Installation
                   </Link>
                   <a
-                    href="https://www.openalgo.in/learn"
+                    href={BRAND.supportUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
                   >
-                    <GraduationCap className="h-5 w-5" />
-                    Varsity
-                  </a>
-                  <a
-                    href="https://openalgo.in/discord"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                    Community
-                  </a>
-                  <a
-                    href="https://openalgo.in/roadmap"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
-                  >
-                    <ClipboardList className="h-5 w-5" />
-                    Roadmap
-                  </a>
-                  <a
-                    href="https://docs.openalgo.in"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
-                  >
-                    <BookOpen className="h-5 w-5" />
-                    Docs
+                    <LifeBuoy className="h-5 w-5" />
+                    Get support
                   </a>
                 </div>
               </SheetContent>
             </Sheet>
 
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="OpenAlgo" className="h-8 w-8" />
-              <span className="text-xl font-bold hidden sm:inline">OpenAlgo</span>
+              <BrandLockup hideNameOnMobile />
             </Link>
           </div>
 
@@ -236,8 +200,8 @@ export default function Home() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <Link to="/download">
-              <Button size="sm">Download</Button>
+            <Link to="/login">
+              <Button size="sm">Log in</Button>
             </Link>
             <Button
               variant="ghost"
@@ -255,43 +219,37 @@ export default function Home() {
         {/* Hero Section */}
         <section className="container mx-auto px-4 pt-20 pb-16 sm:pt-28 sm:pb-20">
           <div className="text-center max-w-4xl mx-auto">
-            <a
-              href="https://www.openalgo.in/learn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] mb-8 shadow-sm transition-colors hover:border-emerald-500/40 hover:bg-card"
-            >
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] mb-8 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400/60" />
-              <span className="text-amber-700 dark:text-amber-500">New Here</span>
+              <span className="text-brand">{BRAND.displayName}</span>
               <span className="text-muted-foreground">
-                - Learn Free on Open Varsity, {VARSITY_COURSES} Courses
+                - Installed and supported by {BRAND.makerName}
               </span>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-            </a>
+            </span>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              <span className="block text-foreground">Your Personal</span>
-              <span className="block text-primary">Algo Trading Platform</span>
+              <span className="block text-balance text-foreground">Automate your trading strategy.</span>
+              <span className="block text-primary">Take fast trades.</span>
             </h1>
             <p className="text-lg sm:text-xl font-semibold mb-6 text-primary">
-              Community Driven Algo Trading Platform
+              Algorithmic trading for Indian markets, set up and supported for you
             </p>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-              Test and Execute your Trading ideas, Connect your favorite Trading Platforms, AI
-              Driven Strategy Development, with a built-in Options &amp; Portfolio Analytics Suite -
-              option chains and Greeks, portfolio and SIP backtesting - across 30+ Brokers.
+              Test and run your trading ideas, connect the charting platforms you already use, build
+              strategies with AI help, and use the built-in options and portfolio tools - option
+              chains and Greeks, portfolio and SIP backtesting - with 30+ brokers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
                 <Link to="/login">
                   <LogIn className="mr-2 h-5 w-5" />
-                  Login
+                  Log in
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/download">
-                  <Download className="mr-2 h-5 w-5" />
-                  Download
-                </Link>
+                <a href={BRAND.supportUrl} target="_blank" rel="noopener noreferrer">
+                  <LifeBuoy className="mr-2 h-5 w-5" />
+                  Get support
+                </a>
               </Button>
             </div>
           </div>
@@ -299,7 +257,7 @@ export default function Home() {
 
         {/* Integrates With */}
         <section className="container mx-auto px-4 py-12 sm:py-16">
-          <p className="text-center text-xs sm:text-sm font-semibold uppercase tracking-[0.25em] text-amber-700 dark:text-amber-500 mb-6">
+          <p className="text-center text-xs sm:text-sm font-semibold uppercase tracking-[0.25em] text-brand mb-6">
             Integrates With
           </p>
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-4xl mx-auto">
@@ -317,7 +275,7 @@ export default function Home() {
         {/* One platform, many desks */}
         <section className="container mx-auto px-4 py-16 sm:py-20">
           <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-500 mb-6">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-soft bg-brand-soft px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand mb-6">
               <Server className="h-3.5 w-3.5" />
               One platform, many desks
             </span>
@@ -326,16 +284,17 @@ export default function Home() {
               <span className="block text-muted-foreground">A complete trading desk.</span>
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground">
-              Execution is only the starting point. Charting, no-code strategy building, options
-              analytics, scalping and sandbox testing all run inside the same self-hosted stack.
+              Placing orders is only the start. Charting, no-code strategy building, options
+              analytics, scalping and practice trading all run in the same installation, on your own
+              computer or server.
             </p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
             {platformDesks.map((desk) => (
-              <Card key={desk.title} className="h-full transition-colors hover:border-amber-400/40">
+              <Card key={desk.title} className="h-full transition-colors hover-border-brand">
                 <CardContent className="space-y-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-500">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
                     <desk.icon className="h-5 w-5" />
                   </div>
                   <h3 className="font-bold text-base">{desk.title}</h3>
@@ -357,13 +316,13 @@ export default function Home() {
               Trade & Research With Your AI
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground">
-              Two simple ways to bring AI into your trading - talk to your account like a trading
-              desk, or give your AI a toolkit to chart, scan, and backtest for you.
+              Two ways to bring AI into your trading - talk to your account from your AI assistant,
+              or use the built-in agent to chart, analyse and draft strategies.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 max-w-6xl mx-auto">
-            {/* OpenAlgo MCP card */}
+            {/* MCP card */}
             <Card className="group transition-colors hover:border-purple-400/40">
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-4">
@@ -372,7 +331,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold flex items-center gap-2">
-                      OpenAlgo MCP
+                      {BRAND.displayName} MCP
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                     </h3>
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1">
@@ -381,9 +340,8 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Connect your OpenAlgo account to Claude, Cursor, Windsurf, or ChatGPT. Place
-                  orders, check positions, and pull live prices by simply asking - no dashboards, no
-                  clicks.
+                  Connect your {BRAND.displayName} account to Claude, Cursor, Windsurf or ChatGPT.
+                  Place orders, check positions and get live prices by asking in plain words.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {[
@@ -402,7 +360,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* OpenAlgo Skills card */}
+            {/* Built-in agent card */}
             <Card className="group transition-colors hover:border-emerald-400/40">
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-4">
@@ -411,30 +369,32 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold flex items-center gap-2">
-                      OpenAlgo Skills
+                      Built-in AI agent
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                     </h3>
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1">
-                      Chart, Scan & Backtest
+                      Chat, Chart & Build
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Ready-made trading abilities you can drop into your AI assistant - charts,
-                  scanners, custom indicators, and backtests with real brokerage costs. Works with
-                  40+ AI apps.
+                  An assistant inside {BRAND.displayName} that reads your account and market data,
+                  draws charts in the conversation, and drafts Python strategies and Flow workflows
+                  for you to review. Uses the AI provider you choose.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2">
-                  {['100+ indicators', '12 ready-made strategies', 'India / US / Crypto'].map(
-                    (tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-md bg-muted px-2.5 py-1 text-xs text-neutral-600 dark:text-neutral-400"
-                      >
-                        {tag}
-                      </span>
-                    )
-                  )}
+                  {[
+                    'Chat and chart views',
+                    'Python and Flow drafts',
+                    'Your choice of AI provider',
+                  ].map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md bg-muted px-2.5 py-1 text-xs text-neutral-600 dark:text-neutral-400"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </CardContent>
             </Card>

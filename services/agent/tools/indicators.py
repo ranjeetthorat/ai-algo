@@ -1157,6 +1157,6 @@ class IndicatorsToolkit(OpenAlgoToolkit):
             self.invalid_argument(
                 "symbols",
                 "none of the entries is a symbol",
-                'Pass a list of OpenAlgo symbols, for example ["SBIN", "RELIANCE"].',
+                'Pass a list of FastAlgo symbols, for example ["SBIN", "RELIANCE"].',
             )
         return cleaned

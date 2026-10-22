@@ -1,7 +1,9 @@
-import { BarChart3, BookOpen, LogOut, Menu, Moon, Sun, Zap } from 'lucide-react'
+import { BarChart3, LifeBuoy, LogOut, Menu, Moon, Sun, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { authApi } from '@/api/auth'
+import { BrandLockup } from '@/brand/BrandLockup'
+import { BRAND } from '@/brand/brand'
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -87,12 +89,7 @@ export function Navbar({ fluid = false }: NavbarProps = {}) {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div
-        className={cn(
-          'px-4 flex h-14 items-center',
-          fluid ? 'w-full' : 'container mx-auto'
-        )}
-      >
+      <div className={cn('px-4 flex h-14 items-center', fluid ? 'w-full' : 'container mx-auto')}>
         {/* Mobile Menu */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild className="md:hidden">
@@ -113,8 +110,7 @@ export function Navbar({ fluid = false }: NavbarProps = {}) {
                 className="flex items-center gap-2 px-2"
                 onClick={() => setMobileOpen(false)}
               >
-                <img src="/logo.png" alt="OpenAlgo" className="h-8 w-8" />
-                <span className="font-semibold">OpenAlgo</span>
+                <BrandLockup size="md" />
               </Link>
 
               {/* Secondary nav items (not in bottom nav) */}
@@ -126,9 +122,7 @@ export function Navbar({ fluid = false }: NavbarProps = {}) {
                   const active = isActive(item.href)
                   const cls = cn(
                     'flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors min-h-[44px] touch-manipulation',
-                    active
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted active:bg-muted'
+                    active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted active:bg-muted'
                   )
                   const inner = (
                     <>
@@ -186,14 +180,14 @@ export function Navbar({ fluid = false }: NavbarProps = {}) {
                   )
                 })}
                 <a
-                  href="https://docs.openalgo.in"
+                  href={BRAND.supportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors min-h-[44px] touch-manipulation hover:bg-muted active:bg-muted"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <BookOpen className="h-4 w-4" />
-                  Docs
+                  <LifeBuoy className="h-4 w-4" />
+                  Get support
                 </a>
               </nav>
             </div>
@@ -202,8 +196,7 @@ export function Navbar({ fluid = false }: NavbarProps = {}) {
 
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center gap-2 mr-6">
-          <img src="/logo.png" alt="OpenAlgo" className="h-8 w-8" />
-          <span className="hidden font-semibold sm:inline-block">OpenAlgo</span>
+          <BrandLockup hideNameOnMobile />
         </Link>
 
         {/* Desktop Navigation.
@@ -343,13 +336,13 @@ export function Navbar({ fluid = false }: NavbarProps = {}) {
               )}
               <DropdownMenuItem asChild>
                 <a
-                  href="https://docs.openalgo.in"
+                  href={BRAND.supportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2"
                 >
-                  <BookOpen className="h-4 w-4" />
-                  Docs
+                  <LifeBuoy className="h-4 w-4" />
+                  Get support
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

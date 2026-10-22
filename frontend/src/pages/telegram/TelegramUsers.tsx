@@ -2,6 +2,7 @@ import { ArrowLeft, Bell, BellOff, Search, Send, Trash2, Users } from 'lucide-re
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { webClient } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -230,7 +231,7 @@ export default function TelegramUsers() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Telegram User</TableHead>
-                  <TableHead>OpenAlgo Account</TableHead>
+                  <TableHead>{BRAND.displayName} account</TableHead>
                   <TableHead>Notifications</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Last Active</TableHead>

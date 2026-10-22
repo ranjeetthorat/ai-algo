@@ -30,6 +30,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { authApi } from '@/api/auth'
+import { BRAND } from '@/brand/brand'
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog'
 import {
   AlertDialog,
@@ -1636,13 +1637,13 @@ export default function Historify() {
                 ))}
                 <DropdownMenuItem asChild>
                   <a
-                    href="https://docs.openalgo.in"
+                    href={BRAND.supportUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2"
                   >
                     <BookOpen className="h-4 w-4" />
-                    Docs
+                    Help
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

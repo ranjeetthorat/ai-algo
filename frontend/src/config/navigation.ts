@@ -1,7 +1,6 @@
 import {
   BarChart3,
   Bell,
-  BookOpen,
   Bot,
   Boxes,
   CandlestickChart,
@@ -13,9 +12,11 @@ import {
   FileText,
   FlaskConical,
   Gauge,
+  Info,
   Key,
   Layers,
   LayoutDashboard,
+  LifeBuoy,
   type LucideIcon,
   MessageCircle,
   MessageSquare,
@@ -27,6 +28,7 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react'
+import { BRAND } from '@/brand/brand'
 
 export interface NavItem {
   href: string
@@ -89,11 +91,12 @@ export const profileMenuItems: NavItem[] = [
   { href: '/sandbox', label: 'Sandbox', icon: FlaskConical },
   { href: '/leverage', label: 'Leverage', icon: Gauge },
   { href: '/admin', label: 'Admin', icon: Settings },
+  { href: '/about', label: 'About', icon: Info },
 ]
 
-// External links
+// External links. Help goes to the FastAlgo support team, never to upstream docs.
 export const externalLinks = {
-  docs: { href: 'https://docs.openalgo.in', label: 'Docs', icon: BookOpen },
+  support: { href: BRAND.supportUrl, label: 'Get support', icon: LifeBuoy },
 }
 
 // Shared utility to check if a route is active.

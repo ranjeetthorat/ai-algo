@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowLeft, ExternalLink, Loader2, Shield } from 'lucide-
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { fetchCSRFToken } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { BrokerAuthSignOut } from '@/components/auth/BrokerAuthSignOut'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -536,12 +537,12 @@ export default function BrokerTOTP() {
                   Back to Broker Selection
                 </Link>
                 <a
-                  href="https://docs.openalgo.in"
+                  href={BRAND.supportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  Documentation
+                  Get support
                   <ExternalLink className="h-3 w-3" />
                 </a>
                 <BrokerAuthSignOut />

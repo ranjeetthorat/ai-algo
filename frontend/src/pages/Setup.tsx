@@ -1,13 +1,14 @@
 import { Check, Info, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { fetchCSRFToken } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { fetchCSRFToken } from '@/api/client'
 import { cn } from '@/lib/utils'
 import { showToast } from '@/utils/toast'
 
@@ -162,11 +163,11 @@ export default function Setup() {
           <div className="space-y-6 lg:pr-8">
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                Initial <span className="text-primary">Setup</span>
+                Initial <span className="text-brand">Setup</span>
               </h1>
               <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
-                Welcome to OpenAlgo! Create your administrator account to get started with
-                algorithmic trading. This account will have full access to manage the platform.
+                Welcome to {BRAND.displayName}. Create your administrator account to get started
+                with algorithmic trading. This account will have full access to manage the platform.
               </p>
             </div>
 

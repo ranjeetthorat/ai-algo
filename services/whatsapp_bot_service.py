@@ -3,7 +3,7 @@ WhatsApp Bot Service — pair, connect, send, and command dispatch.
 
 Wraps the `wars` library (PyO3 binding over whatsapp-rust). wars is a
 synchronous, single-process WhatsApp Web client: one paired session per
-process. OpenAlgo already runs `gunicorn -w 1` for SocketIO compatibility,
+process. The app already runs `gunicorn -w 1` for SocketIO compatibility,
 so the one-process-only constraint costs nothing.
 
 Lifecycle:
@@ -92,6 +92,7 @@ from database.whatsapp_db import (
     save_session_blob,
     update_bot_config,
 )
+from utils import brand
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -1048,7 +1049,7 @@ class WhatsAppBotService:
     def _cmd_help(self, wa, msg, chat, sender_jid, args) -> None:
         self.send_sync(
             chat,
-            "OpenAlgo WhatsApp Bot\n"
+            f"{brand.display_name()} WhatsApp Bot\n"
             "/status - connection + paired status\n"
             "/orderbook - today's orders\n"
             "/tradebook - today's trades\n"
@@ -1089,14 +1090,14 @@ class WhatsAppBotService:
         if not owner_username:
             return None, (
                 "No owner recorded for this paired device. Re-pair from the "
-                "/whatsapp page while logged in to OpenAlgo."
+                f"/whatsapp page while logged in to {brand.display_name()}."
             )
         try:
             from database.auth_db import get_api_key_for_tradingview
             api_key = get_api_key_for_tradingview(owner_username)
         except Exception:
             logger.exception("Failed to load owner api_key from auth_db")
-            return None, "Could not load OpenAlgo API key for the owner."
+            return None, "Could not read your API key just now. Try again in a moment."
         if not api_key:
             return None, (
                 "No API key on file for the owner. Generate one at /apikey "
@@ -1106,7 +1107,7 @@ class WhatsAppBotService:
         try:
             from openalgo import api as openalgo_api  # type: ignore
         except Exception:
-            return None, "openalgo SDK not available on this server."
+            return None, "Trading commands are not available on this server. Contact support."
         try:
             return openalgo_api(api_key=api_key, host=host_url), None
         except Exception as e:

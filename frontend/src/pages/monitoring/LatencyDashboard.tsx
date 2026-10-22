@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle, Download, Gauge, RefreshCw, XCircle, Zap } from
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { webClient } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -579,7 +580,7 @@ export default function LatencyDashboard() {
                     <div>
                       <span className="font-semibold text-sm">Platform Processing</span>
                       <Badge variant="outline" className="ml-2 text-xs">
-                        OpenAlgo
+                        {BRAND.displayName}
                       </Badge>
                       <p className="text-xs text-muted-foreground mt-1">
                         Authentication, validation & logging

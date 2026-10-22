@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
+import { BRAND } from '@/brand/brand'
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Home',
   '/faq': 'FAQ',
+  '/about': 'About',
   '/setup': 'Setup',
   '/login': 'Login',
   '/reset-password': 'Reset Password',
@@ -88,7 +90,7 @@ const DYNAMIC_TITLES: Array<{ pattern: RegExp; title: string }> = [
   { pattern: /^\/websocket\/test\/\d+$/, title: 'WebSocket Test' },
 ]
 
-function getPageTitle(pathname: string): string {
+function getPageTitle(pathname: string): string | null {
   if (PAGE_TITLES[pathname]) {
     return PAGE_TITLES[pathname]
   }
@@ -99,7 +101,7 @@ function getPageTitle(pathname: string): string {
     }
   }
 
-  return 'OpenAlgo'
+  return null
 }
 
 export function usePageTitle() {
@@ -107,6 +109,6 @@ export function usePageTitle() {
 
   useEffect(() => {
     const title = getPageTitle(pathname)
-    document.title = title === 'OpenAlgo' ? 'OpenAlgo' : `${title} | OpenAlgo`
+    document.title = title ? `${title} | ${BRAND.displayName}` : BRAND.displayName
   }, [pathname])
 }

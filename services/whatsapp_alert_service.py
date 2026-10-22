@@ -298,7 +298,7 @@ class WhatsAppAlertService:
         """Format the order/position/batch event and dispatch a self-send
         WhatsApp alert to the paired device's owner.
 
-        Single-user OpenAlgo: every order placed via this instance is by the
+        Single-user install: every order placed via this instance is by the
         operator who paired the WhatsApp device. We confirm that by matching
         the order's api_key→username against `whatsapp_config.owner_username`
         captured at pair time, then fire a self-send through wars's single-

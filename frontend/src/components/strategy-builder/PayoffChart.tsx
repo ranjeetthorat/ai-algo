@@ -1,5 +1,6 @@
 import type * as PlotlyTypes from 'plotly.js'
 import { useId, useMemo } from 'react'
+import { BRAND } from '@/brand/brand'
 import Plot from '@/lib/Plot2D'
 import { lognormalPriceBand, type PayoffResult, type ScenarioState } from '@/lib/strategyMath'
 import { useThemeStore } from '@/stores/themeStore'
@@ -316,7 +317,7 @@ export function PayoffChart({
       y: 0,
       xref: 'paper',
       yref: 'paper',
-      text: 'openalgo.in',
+      text: BRAND.productUrl.replace(/^https?:\/\//, ''),
       showarrow: false,
       xanchor: 'right',
       yanchor: 'top',

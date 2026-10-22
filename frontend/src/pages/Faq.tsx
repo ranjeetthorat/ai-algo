@@ -1,15 +1,8 @@
-import {
-  BookOpen,
-  ClipboardList,
-  Download,
-  HelpCircle,
-  Menu,
-  MessageCircle,
-  Moon,
-  Sun,
-} from 'lucide-react'
+import { Code, HelpCircle, LifeBuoy, Menu, Monitor, Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { BrandLockup } from '@/brand/BrandLockup'
+import { BRAND } from '@/brand/brand'
 import { Footer } from '@/components/layout/Footer'
 import {
   Accordion,
@@ -29,29 +22,27 @@ import {
 } from '@/components/ui/sheet'
 import { useThemeStore } from '@/stores/themeStore'
 
+const name = BRAND.displayName
+
 const faqData = [
   {
     category: 'General',
     questions: [
       {
-        question: 'What is OpenAlgo?',
-        answer:
-          'OpenAlgo is an open-source algorithmic trading platform that provides a unified API layer across 36 broker plugins: 35 securities integrations and Delta Exchange for crypto derivatives. It enables seamless integration with TradingView, Amibroker, Excel, Python, and AI agents, allowing traders to automate their trading strategies without being locked into a single broker.',
+        question: `What is ${name}?`,
+        answer: `${name} is an algorithmic trading platform for Indian markets. It connects to your broker through one API, so you can send orders from TradingView, Amibroker, Excel, Python or an AI assistant, and switch brokers without rewriting your strategies. ${BRAND.makerName} installs it, sets it up and supports it for you.`,
       },
       {
         question: 'Which brokers are supported?',
-        answer:
-          'OpenAlgo supports 36 broker plugins: 5 Paisa, 5 Paisa (XTS), Alice Blue, Angel One, Arrow, CompositEdge, Definedge, Delta Exchange, Dhan, Dhan (Sandbox), Firstock, Flattrade, Fyers, Groww, HDFC Securities, HDFC Sky, Ibulls, IIFL, IIFL Capital, IndMoney, JainamXts, Kotak Securities, Motilal Oswal, mStock by Mirae Asset, Nubra, Paytm Money, Pocketful, RMoney, Samco, Shoonya (Finvasia), TradeSmart, Tradejini, Upstox, Wisdom Capital, Zebu and Zerodha. Delta Exchange is a crypto exchange; the rest are Indian brokers. New brokers are being added regularly.',
+        answer: `${name} supports 36 brokers: 5 Paisa, 5 Paisa (XTS), Alice Blue, Angel One, Arrow, CompositEdge, Definedge, Delta Exchange, Dhan, Dhan (Sandbox), Firstock, Flattrade, Fyers, Groww, HDFC Securities, HDFC Sky, Ibulls, IIFL, IIFL Capital, IndMoney, JainamXts, Kotak Securities, Motilal Oswal, mStock by Mirae Asset, Nubra, Paytm Money, Pocketful, RMoney, Samco, Shoonya (Finvasia), TradeSmart, Tradejini, Upstox, Wisdom Capital, Zebu and Zerodha. Delta Exchange is a crypto exchange; the rest are Indian brokers.`,
       },
       {
-        question: 'What are the system requirements?',
-        answer:
-          'OpenAlgo requires Python 3.12 or higher and Node.js 20+ for the frontend. It runs on Windows, macOS, and Linux. For optimal performance, we recommend at least 4GB RAM and a stable internet connection. The application uses SQLite by default, making it lightweight and easy to deploy.',
+        question: 'What do I need to run it?',
+        answer: `${name} runs on Windows, macOS and Linux. A computer or server with at least 4 GB of RAM and a stable internet connection is enough. You do not need to install anything yourself: ${BRAND.makerName} installs and sets it up for you.`,
       },
       {
-        question: 'Where can I host OpenAlgo?',
-        answer:
-          'OpenAlgo can be hosted locally on your personal computer, on a VPS (Virtual Private Server), or in the cloud. Popular options include AWS, Google Cloud, DigitalOcean, or any Linux VPS provider. For Indian traders, hosting on an Indian VPS ensures low latency connections to broker servers.',
+        question: `Where can ${name} be installed?`,
+        answer: `On your own computer, or on a cloud server so it keeps running when your computer is off. For Indian brokers, a server in India keeps the connection to your broker fast. Broker API orders also need a static IP registered with your broker, which a server provides. ${BRAND.makerName} can advise on the right option and set it up.`,
       },
     ],
   },
@@ -59,19 +50,16 @@ const faqData = [
     category: 'Costs & Security',
     questions: [
       {
-        question: 'What are the costs involved?',
-        answer:
-          'OpenAlgo is completely free and open-source under the AGPL license. There are no licensing fees, subscription costs, or hidden charges. You only pay for your hosting infrastructure (if using cloud/VPS) and standard brokerage charges from your broker. Self-hosting on your own computer is completely free.',
+        question: `Is ${name} free and open source?`,
+        answer: `${BRAND.productName} is open-source software based on ${BRAND.upstreamName}, licensed under ${BRAND.licenseName}. ${BRAND.makerName} provides installation, setup, custom strategies and ongoing support as a paid service. You also pay your own hosting costs, if you use a server, and your normal brokerage charges.`,
       },
       {
-        question: 'How secure is OpenAlgo?',
-        answer:
-          'Security is a top priority. OpenAlgo stores API credentials locally on your machine with encryption. It uses HTTPS for all communications, implements CSRF protection, rate limiting, and secure session management. Since it runs on your own infrastructure, you have complete control over your data. We recommend using strong passwords and enabling 2FA where available.',
+        question: `How secure is ${name}?`,
+        answer: `${name} runs on your own computer or server, so your data stays with you. Broker credentials are stored encrypted, and the app uses CSRF protection, rate limiting and secure sessions. Use a strong password and turn on two-factor authentication with your broker wherever it is available.`,
       },
       {
-        question: 'Why do I need to login daily?',
-        answer:
-          'Daily login is required by Indian brokers for security compliance. Broker sessions typically expire at the end of each trading day or after a set period (usually around 3 AM IST). This is a regulatory requirement, not an OpenAlgo limitation. The platform makes re-authentication quick and easy with TOTP support for most brokers.',
+        question: 'Why do I need to log in every day?',
+        answer: `Indian brokers end API sessions every day, usually around 3 AM IST, as a security requirement. This comes from your broker, not from ${name}. Logging in again takes a moment, and most brokers support TOTP to make it quicker.`,
       },
     ],
   },
@@ -79,24 +67,20 @@ const faqData = [
     category: 'Features & Integration',
     questions: [
       {
-        question: 'Which platforms can I integrate with OpenAlgo?',
-        answer:
-          'OpenAlgo integrates with TradingView (via webhooks), Amibroker (via AFL), GoCharting, ChartInk, MetaTrader, Excel, Google Sheets, Python, Node.js, Go, N8N, and any platform that can send HTTP webhooks. You can also use the REST API directly from any programming language.',
+        question: `Which platforms can I connect to ${name}?`,
+        answer: `TradingView (webhooks), Amibroker (AFL), GoCharting, ChartInk, MetaTrader, Excel, Google Sheets, Python, Node.js, Go, N8N, and any platform that can send a webhook. You can also call the REST API from any programming language.`,
       },
       {
-        question: 'Does OpenAlgo support sandbox trading?',
-        answer:
-          'Yes! OpenAlgo includes an Analyzer/Sandbox mode with sandbox capital of Rs. 1 Crore. This allows you to test strategies in a realistic environment with proper margin calculations, auto square-off at exchange timings, and complete isolation from live trading. Perfect for testing before going live.',
+        question: 'Can I test a strategy without real orders?',
+        answer: `Yes. Analyzer mode gives you 1 crore of practice capital and runs your strategy on live market data, with margin checks and auto square-off at exchange times. It is kept fully separate from live trading, so you can test before you trade with real money.`,
       },
       {
-        question: 'Can I run multiple strategies simultaneously?',
-        answer:
-          'Yes, OpenAlgo supports running multiple strategies simultaneously. You can create different webhook endpoints for different strategies, manage them independently, and monitor their performance through the dashboard. The Action Center allows you to control execution modes for each strategy.',
+        question: 'Can I run several strategies at the same time?',
+        answer: `Yes. Each strategy can have its own webhook, and you can manage and monitor them separately from the dashboard. The Action Center lets you choose how orders from each strategy are handled.`,
       },
       {
-        question: 'Does OpenAlgo provide real-time market data?',
-        answer:
-          'Yes, OpenAlgo includes a unified WebSocket server that streams real-time market data from your broker. This data is used for live position tracking, P&L updates, and can be accessed by your strategies. The data is normalized across all brokers for consistent handling.',
+        question: `Does ${name} show live market data?`,
+        answer: `Yes. ${name} streams live market data from your broker. It is used for live positions and P&L, and your strategies can read it too. The data looks the same whichever broker you use.`,
       },
     ],
   },
@@ -104,24 +88,20 @@ const faqData = [
     category: 'Licensing & Usage',
     questions: [
       {
-        question: 'Can I use OpenAlgo for my proprietary trading strategies?',
-        answer:
-          'Yes, you can use OpenAlgo for your personal or proprietary trading strategies. The AGPL license allows free use for personal trading. However, if you modify OpenAlgo and provide it as a service to others, you must make your modifications open source.',
+        question: `Can I use ${name} for my own trading strategies?`,
+        answer: `Yes. You can use ${name} for your personal or proprietary trading. Your strategies remain yours.`,
       },
       {
-        question: 'Can I rebrand OpenAlgo for commercial use?',
-        answer:
-          'Under the AGPL license, you can modify OpenAlgo, but any derivative work must also be open source and credit the original project. For commercial licensing options that allow rebranding without open-source requirements, please contact the OpenAlgo team.',
+        question: 'Can someone build a custom strategy for me?',
+        answer: `Yes. ${BRAND.makerName} builds custom strategies, alerts and setups as a paid service. Contact support to discuss what you need.`,
       },
       {
-        question: 'Can I charge others for using my OpenAlgo setup?',
-        answer:
-          'If you provide OpenAlgo as a service to others (even if modified), the AGPL license requires you to share your source code. For commercial service offerings without this requirement, commercial licensing options are available.',
+        question: 'Can I offer my setup as a service to others?',
+        answer: `${BRAND.productName} is licensed under ${BRAND.licenseName}. If you modify it and offer it to other people as a service, the licence requires you to share your source code with them.`,
       },
       {
-        question: 'Can I integrate OpenAlgo with GPT/AI assistants?',
-        answer:
-          'Yes! OpenAlgo provides REST APIs that can be called from AI assistants, chatbots, or any automated system. You can build AI-powered trading assistants that use OpenAlgo to execute trades based on natural language commands or AI analysis.',
+        question: `Can I use ${name} with AI assistants?`,
+        answer: `Yes. ${name} can connect to AI assistants such as Claude, Cursor, Windsurf and ChatGPT, and it has a built-in AI agent. You can check positions, get prices and place orders by asking in plain words.`,
       },
     ],
   },
@@ -134,9 +114,8 @@ export default function Faq() {
   const navLinks = [
     { href: '/', label: 'Home', internal: true },
     { href: '/faq', label: 'FAQ', internal: true },
-    { href: 'https://openalgo.in/discord', label: 'Community', internal: false },
-    { href: 'https://openalgo.in/roadmap', label: 'Roadmap', internal: false },
-    { href: 'https://docs.openalgo.in', label: 'Docs', internal: false },
+    { href: '/download', label: 'Installation', internal: true },
+    { href: BRAND.supportUrl, label: 'Get support', internal: false },
   ]
 
   return (
@@ -159,8 +138,7 @@ export default function Faq() {
                   <SheetDescription>Main navigation and quick access links</SheetDescription>
                 </SheetHeader>
                 <div className="flex items-center gap-2 mb-8">
-                  <img src="/logo.png" alt="OpenAlgo" className="h-8 w-8" />
-                  <span className="text-xl font-semibold">OpenAlgo</span>
+                  <BrandLockup size="md" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Link
@@ -197,43 +175,24 @@ export default function Faq() {
                     className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Download className="h-5 w-5" />
-                    Download
+                    <Monitor className="h-5 w-5" />
+                    Installation
                   </Link>
                   <a
-                    href="https://openalgo.in/discord"
+                    href={BRAND.supportUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
                   >
-                    <MessageCircle className="h-5 w-5" />
-                    Community
-                  </a>
-                  <a
-                    href="https://openalgo.in/roadmap"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
-                  >
-                    <ClipboardList className="h-5 w-5" />
-                    Roadmap
-                  </a>
-                  <a
-                    href="https://docs.openalgo.in"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
-                  >
-                    <BookOpen className="h-5 w-5" />
-                    Docs
+                    <LifeBuoy className="h-5 w-5" />
+                    Get support
                   </a>
                 </div>
               </SheetContent>
             </Sheet>
 
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="OpenAlgo" className="h-8 w-8" />
-              <span className="text-xl font-bold hidden sm:inline">OpenAlgo</span>
+              <BrandLockup hideNameOnMobile />
             </Link>
           </div>
 
@@ -258,8 +217,8 @@ export default function Faq() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <Link to="/download">
-              <Button size="sm">Download</Button>
+            <Link to="/login">
+              <Button size="sm">Log in</Button>
             </Link>
             <Button
               variant="ghost"
@@ -280,7 +239,7 @@ export default function Faq() {
           <div className="text-center mb-12">
             <h1 className="text-4xl lg:text-5xl font-bold mb-4">Frequently Asked Questions</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Find answers to common questions about OpenAlgo, its features, security, and
+              Answers to common questions about {BRAND.displayName}, its features, security and
               licensing.
             </p>
           </div>
@@ -292,7 +251,8 @@ export default function Faq() {
                 <CardHeader>
                   <CardTitle>{category.category}</CardTitle>
                   <CardDescription>
-                    {category.category === 'General' && 'Basic information about OpenAlgo'}
+                    {category.category === 'General' &&
+                      `Basic information about ${BRAND.displayName}`}
                     {category.category === 'Costs & Security' &&
                       'Pricing, security, and compliance details'}
                     {category.category === 'Features & Integration' &&
@@ -319,20 +279,20 @@ export default function Faq() {
 
           {/* Resources Section */}
           <div className="max-w-4xl mx-auto mt-16">
-            <h2 className="text-2xl font-bold text-center mb-8">Need More Help?</h2>
+            <h2 className="text-2xl font-bold text-center mb-8">Need more help?</h2>
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="text-center">
                 <CardHeader>
-                  <BookOpen className="h-10 w-10 mx-auto text-primary" />
-                  <CardTitle className="text-lg">Documentation</CardTitle>
+                  <LifeBuoy className="h-10 w-10 mx-auto text-primary" />
+                  <CardTitle className="text-lg">Support</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Comprehensive guides and API references
+                    Questions, problems or custom strategies, {BRAND.makerName} can help
                   </p>
                   <Button variant="outline" asChild>
-                    <a href="https://docs.openalgo.in" target="_blank" rel="noopener noreferrer">
-                      Read Docs
+                    <a href={BRAND.supportUrl} target="_blank" rel="noopener noreferrer">
+                      Get support
                     </a>
                   </Button>
                 </CardContent>
@@ -340,43 +300,31 @@ export default function Faq() {
 
               <Card className="text-center">
                 <CardHeader>
-                  <MessageCircle className="h-10 w-10 mx-auto text-primary" />
-                  <CardTitle className="text-lg">Discord Community</CardTitle>
+                  <Monitor className="h-10 w-10 mx-auto text-primary" />
+                  <CardTitle className="text-lg">Installation</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Join our active community for support
+                    Get {BRAND.displayName} installed, or add another computer
                   </p>
                   <Button variant="outline" asChild>
-                    <a href="https://openalgo.in/discord" target="_blank" rel="noopener noreferrer">
-                      Join Discord
-                    </a>
+                    <Link to="/download">Installation help</Link>
                   </Button>
                 </CardContent>
               </Card>
 
               <Card className="text-center">
                 <CardHeader>
-                  <svg
-                    className="h-10 w-10 mx-auto text-primary"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                  </svg>
-                  <CardTitle className="text-lg">GitHub</CardTitle>
+                  <Code className="h-10 w-10 mx-auto text-primary" />
+                  <CardTitle className="text-lg">Source code</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Report issues or contribute to the project
+                    {BRAND.productName} is open source under {BRAND.licenseName}
                   </p>
                   <Button variant="outline" asChild>
-                    <a
-                      href="https://github.com/marketcalls/openalgo"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View GitHub
+                    <a href={BRAND.sourceUrl} target="_blank" rel="noopener noreferrer">
+                      View source code
                     </a>
                   </Button>
                 </CardContent>

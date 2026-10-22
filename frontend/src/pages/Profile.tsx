@@ -29,6 +29,7 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { webClient } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import TwoFactorEnforcement from '@/components/auth/TwoFactorEnforcement'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
@@ -58,7 +59,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { type AlertCategories, type ToastPosition, useAlertStore } from '@/stores/alertStore'
 import { useAuthStore } from '@/stores/authStore'
-import { type ThemeColor, type ThemeMode, useThemeStore } from '@/stores/themeStore'
+import { type ThemeMode, useThemeStore } from '@/stores/themeStore'
 import { showToast, toast } from '@/utils/toast'
 
 // Professional themes suitable for trading terminals
@@ -75,18 +76,6 @@ const THEME_MODES: { value: ThemeMode; label: string; icon: typeof Sun; descript
     icon: Moon,
     description: 'Reduced eye strain for extended sessions',
   },
-]
-
-// Accent colors for customization
-const ACCENT_COLORS: { value: ThemeColor; label: string; color: string }[] = [
-  { value: 'zinc', label: 'Zinc', color: 'bg-zinc-500' },
-  { value: 'slate', label: 'Slate', color: 'bg-slate-500' },
-  { value: 'gray', label: 'Gray', color: 'bg-gray-500' },
-  { value: 'neutral', label: 'Neutral', color: 'bg-neutral-500' },
-  { value: 'green', label: 'Green', color: 'bg-green-500' },
-  { value: 'blue', label: 'Blue', color: 'bg-blue-500' },
-  { value: 'violet', label: 'Violet', color: 'bg-violet-500' },
-  { value: 'orange', label: 'Orange', color: 'bg-orange-500' },
 ]
 
 interface ProfileData {
@@ -716,15 +705,6 @@ export default function ProfilePage() {
     }
     setMode(newMode)
     showToast.success(`Theme changed to ${newMode}`, 'system')
-  }
-
-  const handleAccentColorChange = (newColor: ThemeColor) => {
-    if (isAnalyzerMode) {
-      showToast.error('Cannot change theme while in Analyzer Mode', 'system')
-      return
-    }
-    setColor(newColor)
-    showToast.success(`Accent color changed to ${newColor}`, 'system')
   }
 
   const handleResetTheme = () => {
@@ -1706,8 +1686,8 @@ export default function ProfilePage() {
             <FolderCheck className="h-4 w-4" />
             <AlertTitle>File Permissions Monitor</AlertTitle>
             <AlertDescription>
-              Check file and directory permissions for OpenAlgo components. Incorrect permissions
-              may cause the application to malfunction.
+              Check file and directory permissions for {BRAND.displayName} components. Incorrect
+              permissions may cause the application to malfunction.
             </AlertDescription>
           </Alert>
 
@@ -1968,7 +1948,7 @@ export default function ProfilePage() {
                   <CardDescription>
                     {isAnalyzerMode
                       ? 'Analyzer Mode (Purple Theme)'
-                      : `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode with ${color.charAt(0).toUpperCase() + color.slice(1)} accent`}
+                      : `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode`}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-4">
@@ -2029,40 +2009,6 @@ export default function ProfilePage() {
                           {themeOption.description}
                         </p>
                       </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Accent Color Selection */}
-          <Card className={isAnalyzerMode ? 'opacity-60' : ''}>
-            <CardHeader>
-              <CardTitle>Accent Color</CardTitle>
-              <CardDescription>Customize the primary accent color</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-                {ACCENT_COLORS.map((accentColor) => {
-                  const isSelected = color === accentColor.value && !isAnalyzerMode
-                  return (
-                    <button
-                      type="button"
-                      key={accentColor.value}
-                      onClick={() => handleAccentColorChange(accentColor.value)}
-                      disabled={isAnalyzerMode}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                        isSelected
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      } ${isAnalyzerMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                      title={accentColor.label}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full ${accentColor.color} ring-2 ring-offset-2 ring-offset-background ${isSelected ? 'ring-primary' : 'ring-transparent'}`}
-                      />
-                      <span className="text-xs font-medium">{accentColor.label}</span>
                     </button>
                   )
                 })}
@@ -2375,8 +2321,8 @@ export default function ProfilePage() {
                 <code className="bg-muted px-1 rounded">.env</code> file.
               </p>
               <p>
-                To apply these changes, please restart the OpenAlgo application using your usual
-                method (terminal, service manager, or container orchestrator).
+                To apply these changes, please restart the {BRAND.displayName} application using
+                your usual method (terminal, service manager, or container orchestrator).
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -1,5 +1,6 @@
 import { AlertTriangle, BookOpen, Copy, ExternalLink, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -163,45 +164,48 @@ export default function TradingView() {
     setShowResults(false)
   }
 
-  const generateJson = useCallback((showError = true) => {
-    if (!symbol || !exchange) {
-      if (showError) {
-        showToast.error('Please select a symbol and exchange', 'clipboard')
+  const generateJson = useCallback(
+    (showError = true) => {
+      if (!symbol || !exchange) {
+        if (showError) {
+          showToast.error('Please select a symbol and exchange', 'clipboard')
+        }
+        return
       }
-      return
-    }
 
-    let json: Record<string, unknown>
+      let json: Record<string, unknown>
 
-    if (alertMode === 'strategy') {
-      // Strategy Alert mode - uses {{strategy.order.action}} placeholder
-      json = {
-        apikey: apiKey || 'YOUR_API_KEY',
-        strategy: 'TradingView Strategy',
-        symbol: symbol,
-        exchange: exchange,
-        action: '{{strategy.order.action}}',
-        product: product,
-        pricetype: 'MARKET',
-        quantity: '{{strategy.order.contracts}}',
-        position_size: '{{strategy.position_size}}',
+      if (alertMode === 'strategy') {
+        // Strategy Alert mode - uses {{strategy.order.action}} placeholder
+        json = {
+          apikey: apiKey || 'YOUR_API_KEY',
+          strategy: 'TradingView Strategy',
+          symbol: symbol,
+          exchange: exchange,
+          action: '{{strategy.order.action}}',
+          product: product,
+          pricetype: 'MARKET',
+          quantity: '{{strategy.order.contracts}}',
+          position_size: '{{strategy.position_size}}',
+        }
+      } else {
+        // Line Alert mode - uses fixed action and quantity
+        json = {
+          apikey: apiKey || 'YOUR_API_KEY',
+          strategy: 'TradingView Line Alert',
+          symbol: symbol,
+          exchange: exchange,
+          action: action,
+          product: product,
+          pricetype: 'MARKET',
+          quantity: quantity,
+        }
       }
-    } else {
-      // Line Alert mode - uses fixed action and quantity
-      json = {
-        apikey: apiKey || 'YOUR_API_KEY',
-        strategy: 'TradingView Line Alert',
-        symbol: symbol,
-        exchange: exchange,
-        action: action,
-        product: product,
-        pricetype: 'MARKET',
-        quantity: quantity,
-      }
-    }
 
-    setGeneratedJson(JSON.stringify(json, null, 2))
-  }, [symbol, exchange, apiKey, alertMode, product, action, quantity])
+      setGeneratedJson(JSON.stringify(json, null, 2))
+    },
+    [symbol, exchange, apiKey, alertMode, product, action, quantity]
+  )
 
   // Auto-generate JSON when values change
   useEffect(() => {
@@ -232,11 +236,11 @@ export default function TradingView() {
         <Alert variant="destructive" className="mb-8">
           <AlertTriangle className="h-5 w-5" />
           <AlertDescription className="ml-2">
-            <strong>Webhook URL not accessible!</strong> TradingView cannot send alerts to
-            localhost. Use <strong>ngrok</strong>, <strong>Cloudflare Tunnel</strong>,{' '}
-            <strong>VS Code Dev Tunnel</strong>, or a <strong>custom domain</strong> to expose your
-            OpenAlgo instance to the internet. Update <code>HOST_SERVER</code> in your{' '}
-            <code>.env</code> file with your external URL.
+            <strong>Webhook URL not reachable.</strong> TradingView cannot send alerts to localhost.
+            Use <strong>ngrok</strong>, <strong>Cloudflare Tunnel</strong>,{' '}
+            <strong>VS Code Dev Tunnel</strong>, or a <strong>custom domain</strong> to make your{' '}
+            {BRAND.displayName} server reachable from the internet. Update <code>HOST_SERVER</code>{' '}
+            in your <code>.env</code> file with your external URL.
           </AlertDescription>
         </Alert>
       )}
@@ -443,16 +447,12 @@ export default function TradingView() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                Learn how to set up automated trading using TradingView webhooks with our
-                step-by-step guide.
+                If you need help connecting TradingView alerts to {BRAND.displayName}, contact
+                support and we will set it up with you.
               </p>
               <Button asChild variant="default">
-                <a
-                  href="https://docs.openalgo.in/trading-platform/tradingview"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Documentation
+                <a href={BRAND.supportUrl} target="_blank" rel="noopener noreferrer">
+                  Get support
                   <ExternalLink className="h-4 w-4 ml-2" />
                 </a>
               </Button>

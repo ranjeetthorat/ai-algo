@@ -1,48 +1,28 @@
-# OpenAlgo - Open Source Algorithmic Trading Platform
+# FastAlgo
 
-<div align="center">
+**Automate your trading strategy. Take fast trades.**
 
-[![PyPI Downloads](https://static.pepy.tech/badge/openalgo)](https://pepy.tech/projects/openalgo)
-[![PyPI Downloads](https://static.pepy.tech/badge/openalgo/month)](https://pepy.tech/projects/openalgo)
-[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/openalgoHQ)](https://twitter.com/openalgoHQ)
-[![YouTube: Subscribe](https://img.shields.io/badge/YouTube-Subscribe-FF0000)](https://www.youtube.com/@openalgo)
-[![Discord](https://img.shields.io/discord/1219847221055455263)](https://discord.com/invite/UPh7QPsNhP)
+FastAlgo is an algorithmic trading platform for Indian markets. It connects your broker account to your strategies: alerts from TradingView, ChartInk and Amibroker, Python scripts, no-code Flow workflows, and multi-leg options strategies with risk management. It runs on your own computer or server, so your data and broker credentials stay with you.
 
-</div>
+FastAlgo is made and supported by [TinyCompute](https://www.tinycompute.site). TinyCompute installs it, connects your broker, builds and maintains your strategies, and supports you when something needs attention.
 
-## What is OpenAlgo?
+FastAlgo is based on [OpenAlgo](https://github.com/marketcalls/openalgo) and is licensed under the GNU AGPL-3.0. See [NOTICE](NOTICE) and [License.md](License.md).
 
-OpenAlgo is a free, open source, self-hosted **trading platform**, not just a broker bridge. Built on Python Flask + React 19, it gives traders a full-stack environment to **design, host, and execute strategies** through **36 broker plugins**: 35 securities integrations and Delta Exchange for crypto derivatives. Whether you write Python, prefer drag-and-drop, or trade options, OpenAlgo provides a common interface without tying strategy code to one adapter.
+## Getting FastAlgo
 
-OpenAlgo is no longer just "an API layer in front of your broker." Today it combines four trading surfaces in one self-hosted instance, sharing the active broker session, market-data infrastructure, and six operational data stores across the journey from idea to testing and live execution.
+FastAlgo is installed for you. There is nothing to download or configure yourself: [contact TinyCompute](https://www.tinycompute.site) to have it set up on your computer or on a server.
 
-## Five Ways to Trade with OpenAlgo
+## Five Ways to Trade with FastAlgo
 
 | Surface | Route | Who it's for |
 | --- | --- | --- |
 | **Unified Broker API** | `/api/v1/` | External platforms: TradingView, Amibroker, ChartInk, Excel, Google Sheets, Python, Java, Go, .NET, Node.js, MetaTrader, GoCharting, N8N. One contract across 36 plugins, with optional operations varying by adapter. |
 | **Python Strategy Host** | `/python` | Traders who code: paste any Python script into the in-browser CodeMirror editor, schedule it on IST start/stop times, run multiple strategies in parallel with process isolation, watch real-time logs. No external server, no Docker, no cron. |
 | **Flow: No-Code Strategy Builder** | `/flow` | Traders who don't code: drag-and-drop nodes for market data, indicators, conditions, order execution, and notifications. Webhook triggers for TradingView and external signals built in. JSON import/export for sharing strategies. |
-| **AI Agent** | `/agent` | Traders who would rather ask: a chat that reads your own market data through OpenAlgo's services, draws charts and payoff diagrams, computes indicators, marks up the `/trading` chart from a right-side panel, and can place orders only with your explicit approval on every single one. Bring your own model from any LiteLLM provider, or a ChatGPT Plus or Pro subscription, or run it locally against Ollama. |
+| **AI Agent** | `/agent` | Traders who would rather ask: a chat that reads your own market data through FastAlgo's services, draws charts and payoff diagrams, computes indicators, marks up the `/trading` chart from a right-side panel, and can place orders only with your explicit approval on every single one. Bring your own model from any LiteLLM provider, or a ChatGPT Plus or Pro subscription, or run it locally against Ollama. |
 | **Options Trading Suite** | `/tools` | Options traders: twelve built-in analytical tools (Strategy Builder with payoff diagrams & live Greeks, Option Chain, IV Smile, Max Pain, Vol Surface, GEX dashboard, OI Tracker, OI Profile, Straddle Chart, Straddle PnL simulator, Option Greeks history). Each one streams from your connected broker. |
 
 Order workflows from the REST API, hosted strategies, and Flow can use Analyzer Mode before live execution. Analytics pages, dashboards, PnL tracking, latency monitoring, notifications, and MCP reuse the same application services where their specific capabilities apply.
-
-## Video Tutorial
-
-[![What is OpenAlgo](https://img.youtube.com/vi/S5myMo9WUdQ/0.jpg)](https://www.youtube.com/watch?v=S5myMo9WUdQ)
-
-## Quick Links
-
-- **Documentation**: [docs.openalgo.in](https://docs.openalgo.in)
-- **Installation Guide**: [Getting Started](https://docs.openalgo.in/installation-guidelines/getting-started)
-- **Upgrade Guide**: [Upgrade Instructions](https://docs.openalgo.in/installation-guidelines/getting-started/upgrade)
-- **Why OpenAlgo**: [Why Build with OpenAlgo](https://docs.openalgo.in/why-to-build-with-openalgo)
-
-
-## Python Compatibility
-
-**Requires Python 3.12 or newer.**
 
 ## Supported Brokers (36 plugins)
 
@@ -86,7 +66,7 @@ Order workflows from the REST API, hosted strategies, and Flow can use Analyzer 
 
 </details>
 
-Plugins share OpenAlgo's normalized API shapes. Exchange coverage, authentication, market-data entitlement, GTT support, and other optional capabilities still vary by adapter and broker account.
+Plugins share FastAlgo's normalized API shapes. Exchange coverage, authentication, market-data entitlement, GTT support, and other optional capabilities still vary by adapter and broker account.
 
 ## Core Features
 
@@ -143,7 +123,6 @@ Complete testing environment with ₹1 Crore sandbox capital:
 - Configurable sandbox square-off schedules
 - Separate database for complete isolation
 
-[API Analyzer Documentation](https://docs.openalgo.in/new-features/api-analyzer)
 
 ### Action Center
 Order approval workflow for manual control:
@@ -152,10 +131,9 @@ Order approval workflow for manual control:
 - Complete audit trail with IST timestamps
 - Approve individual orders or bulk approve all
 
-[Action Center Documentation](https://docs.openalgo.in/new-features/action-center)
 
 ### Python Strategy Host (`/python`)
-Host and run your Python strategies directly inside OpenAlgo, with no separate VM, no cron, no Docker:
+Host and run your Python strategies directly inside FastAlgo, with no separate VM, no cron, no Docker:
 - Built-in code editor powered by **CodeMirror** with Python syntax highlighting and themes
 - Run multiple strategies in parallel with **full process isolation**
 - Automated **IST-based scheduling** with start/stop times and per-day-of-week control
@@ -172,9 +150,9 @@ Direct webhook integration for scanner alerts:
 
 ### AI Agent (`/agent`)
 A built-in LLM agent, on the full page and as a right-side panel on the `/trading` chart:
-- Reads quotes, depth, history, option chains and Greeks through OpenAlgo's own services, never a third-party data feed
+- Reads quotes, depth, history, option chains and Greeks through FastAlgo's own services, never a third-party data feed
 - Draws candles with the charting library, option analytics with Plotly, and marks levels, trendlines and zones onto your chart
-- Computes 127 indicators with the Rust-backed `openalgo.ta`, and generates Python strategies using the OpenAlgo SDK
+- Computes 127 indicators with the Rust-backed `openalgo.ta`, and generates Python strategies using the `openalgo` Python library
 - **Every order pauses for your approval**, showing the exact arguments before anything is sent, with the risk limits applied after you approve
 - Any provider LiteLLM supports, a ChatGPT Plus or Pro subscription over OAuth, or a local model through Ollama
 - Keys are encrypted in your own database and never written to a configuration file
@@ -184,7 +162,7 @@ Connect AI assistants for natural language trading:
 - Compatible with Claude Desktop, Cursor, Windsurf, ChatGPT
 - Execute trades using natural language commands
 - Full trading capabilities: orders, positions, market data
-- Local and secure integration with your OpenAlgo instance
+- Local and secure integration with your FastAlgo installation
 
 ### Telegram Bot Integration
 Real-time notifications and command execution:
@@ -202,9 +180,7 @@ Real-time notifications and command execution:
 
 **PnL Tracker**: Real-time profit/loss with interactive charts powered by TradingView Lightweight Charts
 
-[PnL Tracker Documentation](https://docs.openalgo.in/new-features/pnl-tracker)
 
-[Traffic & Latency Monitor Documentation](https://docs.openalgo.in/new-features/traffic-latency-monitor)
 
 ### Enterprise-Grade Security
 **Password Security**: Argon2 hashing (Password Hashing Competition winner)
@@ -290,123 +266,33 @@ Receive your strategy alerts directly to **Telegram** for all platforms.
 - **SQLite** - 5 databases (main, logs, latency, health, sandbox)
 - **DuckDB** - 1 historical market-data store (Historify)
 
-## Official SDKs
+## For developers
 
-OpenAlgo provides officially supported client libraries for application development and system-level integrations:
-
-| Language / Platform | Repository |
-|---------------------|------------|
-| Python | [openalgo-python-library](https://github.com/marketcalls/openalgo-python-library) |
-| Node.js | [openalgo-node](https://github.com/marketcalls/openalgo-node) |
-| Java | [openalgo-java](https://github.com/marketcalls/openalgo-java) |
-| Rust | [openalgo-rust](https://github.com/marketcalls/openalgo-rust) |
-| .NET / C# | [openalgo.NET](https://github.com/marketcalls/openalgo.NET) |
-| Go | [openalgo-go](https://github.com/marketcalls/openalgo-go) |
-
-## OpenAlgo FOSS Ecosystem
-
-OpenAlgo is part of a larger open-source trading ecosystem:
-
-- **OpenAlgo Core**: This repository (Python Flask + React)
-- **Historify**: Stock market data management platform
-- **Official SDKs**: Python, Node.js, Java, Rust, .NET, Go (see above)
-- **Excel Add-in**: Direct Excel integration
-- **MCP Server**: AI agents integration
-- **Chrome Plugin**: Browser-based tools
-- **Fast Scalper**: High-performance trading (Rust + Tauri)
-- **Web Portal**: Modern UI (NextJS + ShadcnUI)
-- **Documentation**: Comprehensive guides on [Gitbook](https://docs.openalgo.in/mini-foss-universe)
-
-## Installation
-
-### Minimum Requirements
-- **RAM**: 2GB (or 0.5GB + 2GB swap)
-- **Disk**: 1GB
-- **CPU**: 1 vCPU
-- **Python**: 3.12 or newer
-- **Node.js**: 20.20+, 22.22+, or 24.13+ (for frontend development)
-
-### Quick Start with UV
-
-OpenAlgo uses the modern `uv` package manager for faster, more reliable installations:
+Python 3.12+ with [uv](https://docs.astral.sh/uv/), and Node.js for the frontend.
 
 ```bash
-# Clone the repository
-git clone --filter=blob:none https://github.com/marketcalls/openalgo.git
-cd openalgo
-
-# Install UV package manager
-pip install uv
-
-# Configure environment
-cp .sample.env .env
-# Edit .env with your broker API credentials as per documentation
-
-# Run the application using UV
-uv run app.py
+uv sync                      # backend dependencies
+cp .sample.env .env          # then fill in broker credentials
+cd frontend && npm ci && npm run build && cd ..
+uv run app.py                # http://127.0.0.1:5000
 ```
 
-The application will be available at `http://127.0.0.1:5000`
+Before a release:
 
-For detailed installation instructions, deployment options (Docker, AWS, etc.), and configuration guides, visit [docs.openalgo.in/installation-guidelines/getting-started](https://docs.openalgo.in/installation-guidelines/getting-started)
+```bash
+uv run pytest test/ -v
+node scripts/brand-check.mjs # no OpenAlgo text or links may reach users
+```
 
-## API Documentation
-
-Complete API reference and examples:
-- **API Documentation**: [docs.openalgo.in/api-documentation/v1](https://docs.openalgo.in/api-documentation/v1)
-- **Symbol Format**: [docs.openalgo.in/symbol-format](https://docs.openalgo.in/symbol-format)
-
-## Key Benefits
-
-- **Guided Installation**: UV and production install scripts with explicit broker configuration
-- **Single API, Multiple Brokers**: Switch brokers without code changes
-- **No Data Collection**: Complete privacy - your data stays on your server
-- **Visual Strategy Builder**: Create strategies with drag-and-drop Flow editor
-- **Host Python Strategies**: Run strategies directly without external servers
-- **Smart Order Execution**: Intelligent routing for complex strategies
-- **Order Splitting**: Automatically split large orders into smaller chunks
-- **Real-Time Analytics**: PnL tracking, latency monitoring, traffic analysis
-- **Strategy Templates**: Rapid prototyping with pre-built templates
-- **Plugin Architecture**: Extensible design for custom integrations
-- **Active Community**: Discord support, virtual meetups, open roadmap
-
-## Documentation
-
-Comprehensive documentation is available at [docs.openalgo.in](https://docs.openalgo.in):
-- API Reference with examples
-- Broker-specific guides
-- Security best practices
-- Deployment tutorials
-- Strategy development guides
-- Troubleshooting and FAQs
-
-## Contributing
-
-We welcome contributions! To contribute:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes using [Conventional Commits](CONTRIBUTING.md#commit-messages), for example:
-   ```bash
-   git commit -m "feat: add amazing feature"
-   ```
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Community & Support
-
-- **Discord**: [Join our community](https://www.openalgo.in/discord)
-- **Twitter/X**: [@openalgoHQ](https://twitter.com/openalgoHQ)
-- **YouTube**: [@openalgo](https://www.youtube.com/@openalgo)
-- **GitHub Issues**: [Report bugs or request features](https://github.com/marketcalls/openalgo/issues)
+Project guidance for contributors and AI assistants is in [CLAUDE.md](CLAUDE.md). The rebrand plan and the design language are in [docs/plans/2026-10-17-product-rebrand-review.md](docs/plans/2026-10-17-product-rebrand-review.md) and [docs/design/brand/design-language.md](docs/design/brand/design-language.md).
 
 ## License
 
-OpenAlgo is released under the **AGPL V3.0 License**. See [License.md](License.md) for details.
+FastAlgo is free software under the GNU Affero General Public License v3.0. It is a modified version of OpenAlgo, and all original copyright notices are retained. If you use FastAlgo over a network, you are entitled to its complete source code, available at https://github.com/ranjeetthorat/ai-algo.
 
 ## Credits & Acknowledgments
 
-OpenAlgo is built upon the shoulders of giants. We extend our gratitude to all the open-source projects that make this platform possible.
+FastAlgo, and OpenAlgo before it, is built on the shoulders of giants. We extend our gratitude to all the open-source projects that make this platform possible.
 
 ### Core Framework
 - **[Flask](https://flask.palletsprojects.com)** - BSD License - Python web microframework
@@ -461,10 +347,6 @@ The AI Agent at `/agent` is deliberately LLM-agnostic. The agent loop and the pr
 - **[next-themes](https://github.com/pacocoursey/next-themes)** - MIT License - Theme switching
 - **[react-resizable-panels](https://github.com/bvaughn/react-resizable-panels)** - MIT License - Resizable panel layouts
 - **[html2canvas-pro](https://html2canvas.hertzen.com)** - MIT License - Screenshot generation
-
-## Repo Activity
-
-![Alt](https://repobeats.axiom.co/api/embed/0b6b18194a3089cb47ab8ae588caabb14aa9972b.svg "Repobeats analytics image")
 
 ## Disclaimer
 

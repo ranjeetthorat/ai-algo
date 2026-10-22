@@ -2,6 +2,7 @@ import { ArrowLeft, BarChart3, Bell, MessageSquare, TrendingUp, Users } from 'lu
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { webClient } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -248,7 +249,7 @@ export default function TelegramAnalytics() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>OpenAlgo Account</TableHead>
+                  <TableHead>{BRAND.displayName} account</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Last Active</TableHead>

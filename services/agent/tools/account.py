@@ -87,7 +87,7 @@ _ANALYZE_NOTE = (
 )
 
 _UNEXPECTED_SHAPE_NOTE = (
-    "The broker returned this book in a shape OpenAlgo does not recognise as a row list, so it "
+    "The broker returned this book in a shape FastAlgo does not recognise as a row list, so it "
     "is passed through unchanged. Read it as it is rather than assuming the book is empty."
 )
 
@@ -598,13 +598,13 @@ class AccountToolkit(OpenAlgoToolkit):
         if exchange not in _EXCHANGES:
             self.invalid_argument(
                 "exchange",
-                f"{exchange!r} is not an OpenAlgo exchange code.",
+                f"{exchange!r} is not a FastAlgo exchange code.",
                 f"Use one of: {', '.join(_EXCHANGES)}.",
             )
         if product not in _PRODUCTS:
             self.invalid_argument(
                 "product",
-                f"{product!r} is not an OpenAlgo product type.",
+                f"{product!r} is not a FastAlgo product type.",
                 f"Use one of: {', '.join(_PRODUCTS)}. CNC is delivery equity, NRML is carry "
                 "futures and options, MIS is intraday.",
             )

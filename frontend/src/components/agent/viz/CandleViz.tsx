@@ -40,6 +40,7 @@
 
 import type { Bar, Chart, SeriesStyle, SeriesType } from 'openalgo-charts'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { BRAND } from '@/brand/brand'
 import { cn } from '@/lib/utils'
 import { useThemeStore } from '@/stores/themeStore'
 import { asNumber, asRecord, asText, parseBars } from './spec'
@@ -302,9 +303,9 @@ export function CandleViz({ spec, title, source, variant = 'figure', className }
           opacity: 0.8,
           // Mark alone at rest; the wording unrolls to its right on hover, so
           // it names itself when looked at without occupying the corner always.
-          label: 'OpenAlgo Charts',
+          label: `${BRAND.displayName} Charts`,
           labelColor: mode === 'dark' || appMode === 'analyzer' ? '#e4e8f4' : '#3c4354',
-          href: 'https://openalgo.in',
+          href: BRAND.productUrl,
         },
       })
       instance = created
@@ -316,7 +317,6 @@ export function CandleViz({ spec, title, source, variant = 'figure', className }
         instance = null
         return
       }
-
 
       const definition = types.CHART_TYPES[chartSpec.chartType] ?? types.CHART_TYPES.candlestick
       // Only Heikin Ashi is reachable from the backend's list and it ignores

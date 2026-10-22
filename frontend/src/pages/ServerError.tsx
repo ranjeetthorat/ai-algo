@@ -1,7 +1,8 @@
-import { AlertTriangle, BookOpen, Download, HelpCircle, Home, LogOut } from 'lucide-react'
+import { AlertTriangle, Download, HelpCircle, Home, LifeBuoy, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { fetchCSRFToken } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { showToast } from '@/utils/toast'
@@ -98,9 +99,9 @@ export default function ServerError() {
         {/* Quick Links */}
         <div className="flex flex-wrap justify-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <a href="https://docs.openalgo.in" target="_blank" rel="noopener noreferrer">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Documentation
+            <a href={BRAND.supportUrl} target="_blank" rel="noopener noreferrer">
+              <LifeBuoy className="h-4 w-4 mr-2" />
+              Get support
             </a>
           </Button>
           <Button variant="ghost" size="sm" asChild>

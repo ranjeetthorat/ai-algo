@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -316,8 +317,9 @@ export default function ApiKey() {
               API Playground
             </CardTitle>
             <CardDescription>
-              Test and explore OpenAlgo REST APIs directly in your browser. Send requests, view
-              responses, and experiment with all available endpoints without writing any code.
+              Test and explore {BRAND.displayName} REST APIs directly in your browser. Send
+              requests, view responses, and experiment with all available endpoints without writing
+              any code.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

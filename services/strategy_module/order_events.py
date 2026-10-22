@@ -434,7 +434,7 @@ def _cancel_working_retry(run_id: int, retry_order_id: int) -> bool:
     api_key = engine._api_key_for(user_id)
     if not api_key:
         result = None
-        error = "the OpenAlgo API key is unavailable"
+        error = "the API key is unavailable"
     else:
         result = engine.order_dispatch.cancel_exit_order(
             mode=run_mode,

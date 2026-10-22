@@ -2,7 +2,7 @@
 
 ## Our Commitment
 
-OpenAlgo handles sensitive financial operations and broker credentials. We take security seriously and appreciate responsible disclosure of vulnerabilities.
+FastAlgo handles sensitive financial operations and broker credentials. We take security seriously and appreciate responsible disclosure of vulnerabilities.
 
 ## Supported Versions
 
@@ -16,7 +16,7 @@ We recommend always running the latest version.
 
 ## Reporting a Vulnerability
 
-**Email:** rajandran@openalgo.in
+**Contact:** TinyCompute, privately, through https://www.tinycompute.site. Do not open a public GitHub issue for a vulnerability.
 
 **Please include:**
 - Description of the vulnerability
@@ -43,7 +43,7 @@ We recommend always running the latest version.
 - Use environment variables, not hardcoded values
 
 ### Deployment
-- Use HTTPS in production (install.sh configures this)
+- Use HTTPS in production
 - Keep your server and dependencies updated
 - Use strong passwords and enable TOTP
 - Restrict firewall to necessary ports only (22, 80, 443)
@@ -85,6 +85,6 @@ We acknowledge security researchers who responsibly disclose vulnerabilities. Wi
 
 ## Contact
 
-- **Security issues:** rajandran@openalgo.in
-- **General issues:** https://github.com/marketcalls/openalgo/issues
-- **Documentation:** https://docs.openalgo.in
+- **Security issues:** TinyCompute, privately, through https://www.tinycompute.site
+- **General issues:** https://github.com/ranjeetthorat/ai-algo/issues
+

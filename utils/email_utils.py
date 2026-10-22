@@ -1,10 +1,11 @@
 """
-Email Utility Functions for OpenAlgo
+Email Utility Functions
 
 This module provides email sending functionality for SMTP configuration testing
 and password reset notifications.
 """
 
+import html
 import smtplib
 import ssl
 from datetime import datetime
@@ -12,6 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from database.settings_db import get_smtp_settings
+from utils import brand
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -23,18 +25,22 @@ class EmailSendError(Exception):
     pass
 
 
-def send_test_email(recipient_email, sender_name="OpenAlgo Admin"):
+def send_test_email(recipient_email, sender_name=None):
     """
     Send a test email to verify SMTP configuration.
 
     Args:
         recipient_email (str): Email address to send test email to
-        sender_name (str): Name of the sender
+        sender_name (str): Name of the sender. Defaults to "<display name> Admin".
 
     Returns:
         dict: Result dictionary with success status and message
     """
+    if sender_name is None:
+        sender_name = f"{brand.display_name()} Admin"
     try:
+        name = brand.display_name()
+        signature = brand.email_signature()
         smtp_settings = get_smtp_settings()
         if not smtp_settings:
             return {
@@ -59,7 +65,7 @@ def send_test_email(recipient_email, sender_name="OpenAlgo Admin"):
             }
 
         # Create test email content
-        subject = "OpenAlgo - SMTP Test Successful"
+        subject = f"{name} - SMTP Test Successful"
 
         # Create modern minimalistic HTML email
         html_content = f"""
@@ -129,7 +135,7 @@ def send_test_email(recipient_email, sender_name="OpenAlgo Admin"):
                                 {datetime.now().strftime("%B %d, %Y at %H:%M UTC")}
                             </p>
                             <p style="margin: 16px 0 0 0; font-size: 12px; color: #3f3f46;">
-                                Sent by <span style="color: #a1a1aa;">OpenAlgo</span>
+                                <span style="color: #a1a1aa;">{html.escape(signature)}</span>
                             </p>
                         </td>
                     </tr>
@@ -145,7 +151,7 @@ def send_test_email(recipient_email, sender_name="OpenAlgo Admin"):
         text_content = f"""
 SMTP Configuration Test - Success
 
-Your OpenAlgo SMTP configuration is working correctly.
+Your {name} SMTP configuration is working correctly.
 
 Server: {smtp_settings["smtp_server"]}:{smtp_settings["smtp_port"]}
 Security: {"TLS/SSL Enabled" if smtp_settings.get("smtp_use_tls") else "No Encryption"}
@@ -154,7 +160,7 @@ Sent to: {recipient_email}
 Date: {datetime.now().strftime("%B %d, %Y at %H:%M UTC")}
 
 --
-Sent by OpenAlgo
+{signature}
         """
 
         # Send the email
@@ -198,7 +204,9 @@ def send_password_reset_email(recipient_email, reset_link, user_name="User"):
         if not smtp_settings:
             return {"success": False, "message": "SMTP not configured"}
 
-        subject = "Reset your OpenAlgo password"
+        name = brand.display_name()
+        signature = brand.email_signature()
+        subject = f"Reset your {name} password"
 
         html_content = f"""
 <!DOCTYPE html>
@@ -279,7 +287,7 @@ def send_password_reset_email(recipient_email, reset_link, user_name="User"):
                                 Didn't request this? You can safely ignore this email.
                             </p>
                             <p style="margin: 16px 0 0 0; font-size: 12px; color: #3f3f46;">
-                                Sent by <span style="color: #a1a1aa;">OpenAlgo</span>
+                                <span style="color: #a1a1aa;">{html.escape(signature)}</span>
                             </p>
                         </td>
                     </tr>
@@ -296,7 +304,7 @@ Reset your password
 
 Hi {user_name},
 
-We received a request to reset your OpenAlgo password. Click the link below to set a new password:
+We received a request to reset your {name} password. Click the link below to set a new password:
 
 {reset_link}
 
@@ -305,7 +313,7 @@ This link expires in 1 hour. Never share this link with anyone.
 If you didn't request this, you can safely ignore this email.
 
 --
-Sent by OpenAlgo
+{signature}
         """
 
         return send_email(

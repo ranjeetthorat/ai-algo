@@ -123,7 +123,7 @@ logger = get_logger(__name__)
 #: agent-placed order from one they placed themselves. It is a constant rather
 #: than an argument: the model does not get to choose how its own orders are
 #: attributed.
-AGENT_STRATEGY = "OpenAlgo Agent"
+AGENT_STRATEGY = "FastAlgo Agent"
 
 #: Every tool this toolkit exposes. All of them change the account, so all of
 #: them require human approval and the two are the same list by construction.
@@ -1155,13 +1155,13 @@ class OrdersToolkit(OpenAlgoToolkit):
             The upper-cased exchange code.
 
         Raises:
-            RetryAgentRun: When it is not an OpenAlgo exchange code.
+            RetryAgentRun: When it is not a FastAlgo exchange code.
         """
         text = self._required_text("exchange", value).upper()
         if text not in VALID_EXCHANGES:
             self.invalid_argument(
                 "exchange",
-                f"{text} is not an OpenAlgo exchange code.",
+                f"{text} is not a FastAlgo exchange code.",
                 f"Use one of: {', '.join(VALID_EXCHANGES)}.",
             )
         return text

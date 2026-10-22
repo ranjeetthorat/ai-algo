@@ -17,6 +17,7 @@ const SipBacktester = lazy(() => import('@/pages/SipBacktester'))
 const SipBacktesterResults = lazy(() => import('@/pages/SipBacktesterResults'))
 const PortfolioAnalyzer = lazy(() => import('@/pages/PortfolioAnalyzer'))
 const Faq = lazy(() => import('@/pages/Faq'))
+const About = lazy(() => import('@/pages/About'))
 const Setup = lazy(() => import('@/pages/Setup'))
 const Login = lazy(() => import('@/pages/Login'))
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
@@ -169,6 +170,7 @@ function App() {
               {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/faq" element={<Faq />} />
+              <Route path="/about" element={<About />} />
               <Route path="/setup" element={<Setup />} />
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />

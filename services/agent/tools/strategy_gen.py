@@ -619,7 +619,7 @@ class StrategyGenToolkit(OpenAlgoToolkit):
         raise RetryAgentRun(
             "The strategy source does not read "
             + ", ".join(missing)
-            + " from the environment, so it was not written. A hosted OpenAlgo strategy takes "
+            + " from the environment, so it was not written. A hosted FastAlgo strategy takes "
             "its API key and its endpoints from the environment the /python host injects, "
             "never from literals, and reads them by their literal names:\n"
             f"{ENV_SNIPPET}\n"

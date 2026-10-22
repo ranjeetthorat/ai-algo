@@ -1,7 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render as rtlRender, screen, waitFor } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSessionStore } from '@/stores/sessionStore'
 import { Footer } from './Footer'
+
+// The footer links to /about, so it needs a router.
+function render(ui: ReactElement) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 function mockAppInfoResponse(data: unknown) {
   const json = vi.fn().mockResolvedValue(data)
@@ -58,8 +65,8 @@ describe('Footer', () => {
 
     await waitFor(() => expect(json).toHaveBeenCalled())
     expect(screen.queryByText(/session/)).not.toBeInTheDocument()
-    expect(screen.getByText('Open Source Algo Platform for Everyone')).toBeInTheDocument()
-    expect(separatorCount()).toBe(1)
+    expect(screen.getByText('Automate your trading strategy. Take fast trades.')).toBeInTheDocument()
+    expect(separatorCount()).toBe(0)
   })
 
   it('renders sessions without a version badge when version is absent', async () => {
@@ -71,7 +78,7 @@ describe('Footer', () => {
     await waitFor(() => expect(json).toHaveBeenCalled())
     expect(screen.getByText('3 sessions')).toBeInTheDocument()
     expect(screen.queryByText('v')).not.toBeInTheDocument()
-    expect(separatorCount()).toBe(2)
+    expect(separatorCount()).toBe(1)
   })
 
   it('survives a failed app-info request', async () => {
@@ -82,8 +89,32 @@ describe('Footer', () => {
 
     await request.catch(() => undefined)
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/auth/app-info'))
-    expect(screen.getByText('Copyright 2026')).toBeInTheDocument()
-    expect(screen.getByText('Open Source Algo Platform for Everyone')).toBeInTheDocument()
-    expect(separatorCount()).toBe(1)
+    expect(screen.getByText('FastAlgo by TinyCompute')).toBeInTheDocument()
+    expect(screen.getByText('Automate your trading strategy. Take fast trades.')).toBeInTheDocument()
+    expect(separatorCount()).toBe(0)
+  })
+
+  it('links to About, support and the AGPL source, and to nothing upstream', async () => {
+    mockAppInfoResponse({ status: 'success' })
+
+    render(<Footer />)
+
+    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about')
+    expect(screen.getByRole('link', { name: 'Get support' })).toHaveAttribute(
+      'href',
+      'https://www.tinycompute.site'
+    )
+    expect(screen.getByRole('link', { name: 'source code' })).toHaveAttribute(
+      'href',
+      'https://github.com/ranjeetthorat/ai-algo'
+    )
+    expect(screen.getByRole('link', { name: 'rthorat99@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:rthorat99@gmail.com'
+    )
+    for (const link of screen.getAllByRole('link')) {
+      expect(link.getAttribute('href')).not.toMatch(/openalgo.in|marketcalls/)
+    }
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
   })
 })

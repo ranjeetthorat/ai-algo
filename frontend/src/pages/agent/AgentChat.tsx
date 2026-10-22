@@ -53,6 +53,7 @@ import {
   recordVoiceTranscript,
   truncateConversation,
 } from '@/api/agent'
+import { BRAND } from '@/brand/brand'
 import { Composer, type ComposerTurn } from '@/components/agent/Composer'
 import { ConversationSidebar } from '@/components/agent/ConversationSidebar'
 import { Message } from '@/components/agent/Message'
@@ -430,8 +431,9 @@ export default function AgentChat() {
                 <>
                   <p className="text-sm font-medium">Ask the agent</p>
                   <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-                    It reads your platform through the same service layer the rest of OpenAlgo uses,
-                    and it can write an OpenAlgo strategy or a Flow workflow for you to review.
+                    It reads your platform through the same service layer the rest of{' '}
+                    {BRAND.displayName} uses, and it can write a Python strategy or a Flow workflow
+                    for you to review.
                   </p>
                 </>
               ) : (

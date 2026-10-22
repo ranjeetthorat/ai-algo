@@ -31,6 +31,7 @@ from services.whatsapp_bot_service import (
     validate_attachment_path,
     whatsapp_bot_service,
 )
+from utils import brand
 from utils.logging import get_logger
 from utils.session import check_session_validity
 
@@ -306,7 +307,7 @@ def test_message():
         wa_user = get_whatsapp_user_by_username(username)
         if wa_user:
             target_jid = wa_user["whatsapp_jid"]
-            test_msg = "*Test from OpenAlgo*\nYour WhatsApp integration is working."
+            test_msg = f"*Test from {brand.display_name()}*\nYour WhatsApp integration is working."
         else:
             all_users = get_all_whatsapp_users()
             if not all_users:
@@ -321,7 +322,7 @@ def test_message():
                 ), 404
             target_jid = all_users[0]["whatsapp_jid"]
             test_msg = (
-                f"*Test from OpenAlgo (admin: {username})*\n"
+                f"*Test from {brand.display_name()} (admin: {username})*\n"
                 "Your WhatsApp integration is working."
             )
 

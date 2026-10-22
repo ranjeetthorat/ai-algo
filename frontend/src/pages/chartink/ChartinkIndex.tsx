@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { chartinkApi } from '@/api/chartink'
+import { BRAND } from '@/brand/brand'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -126,12 +127,13 @@ export default function ChartinkIndex() {
       {hostConfig?.is_localhost && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Webhook URL not accessible!</AlertTitle>
+          <AlertTitle>Webhook URL not reachable.</AlertTitle>
           <AlertDescription>
             Chartink cannot send alerts to localhost. Use <strong>ngrok</strong>,{' '}
             <strong>Cloudflare Tunnel</strong>, <strong>VS Code Dev Tunnel</strong>, or a{' '}
-            <strong>custom domain</strong> to expose your OpenAlgo instance to the internet. Update{' '}
-            <code>HOST_SERVER</code> in your <code>.env</code> file with your external URL.
+            <strong>custom domain</strong> to make your {BRAND.displayName} server reachable from
+            the internet. Update <code>HOST_SERVER</code> in your <code>.env</code> file with your
+            external URL.
           </AlertDescription>
         </Alert>
       )}

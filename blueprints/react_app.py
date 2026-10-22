@@ -3,11 +3,14 @@ React Frontend Serving Blueprint
 Serves the pre-built React app for migrated routes.
 """
 
+import json
 import mimetypes
 import os
 from pathlib import Path
 
-from flask import Blueprint, abort, request, send_file, send_from_directory
+from flask import Blueprint, Response, abort, request, send_file, send_from_directory
+
+from utils import brand
 
 react_bp = Blueprint("react", __name__)
 
@@ -74,7 +77,7 @@ def serve_react_app():
         return (
             """
         <html>
-        <head><title>OpenAlgo - Frontend Not Available</title></head>
+        <head><title>FastAlgo - Frontend Not Available</title></head>
         <body style="font-family: system-ui; padding: 40px; max-width: 600px; margin: 0 auto;">
             <h1>Frontend Not Built</h1>
             <p>The React frontend is not available. To build it:</p>
@@ -138,6 +141,12 @@ def react_download():
 # FAQ page
 @react_bp.route("/faq")
 def react_faq():
+    return serve_react_app()
+
+
+# About page: AGPL attribution and source offer, public on purpose
+@react_bp.route("/about")
+def react_about():
     return serve_react_app()
 
 
@@ -864,6 +873,41 @@ def serve_apple_touch_icon():
     if not is_react_frontend_available():
         return "Not found", 404
     return send_from_directory(FRONTEND_DIST, "apple-touch-icon.png")
+
+
+# Per-instance branding (white-label). A deployment shows a client's own display
+# name and logo when custom_brand/brand.json exists at the repo root, for example
+#   {"displayName": "Sharma Capital", "logo": "sharma.png"}
+# with sharma.png beside it. The directory is gitignored, so updates never touch
+# it. Anything missing or invalid falls back to the built-in brand in
+# frontend/src/brand/brand.ts. Validation lives in utils/brand.py.
+CUSTOM_BRAND_DIR = brand.CUSTOM_BRAND_DIR
+
+
+def _load_brand_override() -> dict:
+    return brand.load_brand_override(CUSTOM_BRAND_DIR)
+
+
+@react_bp.route("/brand-config.js")
+def serve_brand_config():
+    """Expose the per-instance brand override to the React app before it renders.
+
+    Loaded by a plain <script> in index.html, so the first frame already shows
+    the right name and logo. An external same-origin script, because the
+    default CSP does not allow inline scripts.
+    """
+    body = "window.__FASTALGO_BRAND__ = " + json.dumps(_load_brand_override()) + ";\n"
+    response = Response(body, mimetype="application/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@react_bp.route("/custom-brand/<path:filename>")
+def serve_custom_brand(filename):
+    """Serve a client logo from custom_brand/."""
+    if Path(filename).suffix.lower() not in brand.LOGO_EXTENSIONS:
+        abort(404)
+    return send_from_directory(CUSTOM_BRAND_DIR, filename)
 
 
 @react_bp.route("/images/<path:filename>")

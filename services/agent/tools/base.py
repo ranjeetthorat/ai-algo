@@ -197,7 +197,7 @@ _STATUS_GUIDANCE: dict[int, str] = {
         "Do not retry; report it."
     ),
     404: (
-        "The target was not found. Check the spelling, and resolve the exact OpenAlgo symbol "
+        "The target was not found. Check the spelling, and resolve the exact FastAlgo symbol "
         "and exchange with the symbol search tool before calling again."
     ),
     409: "The request conflicts with the current state. Re-read the current state before retrying.",

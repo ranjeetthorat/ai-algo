@@ -39,6 +39,7 @@
  */
 
 import { fetchCSRFToken } from '@/api/client'
+import { BRAND } from '@/brand/brand'
 import { AGENT_API_BASE, type AgentFrame, streamAgentFrames } from './stream'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
@@ -290,7 +291,7 @@ function microphoneRefusal(cause: unknown): string {
   if (!window.isSecureContext || name === 'SecurityError') {
     return (
       'Your browser will not allow the microphone on this address. Open ' +
-      'OpenAlgo at http://127.0.0.1:5000, or set up https for your domain. ' +
+      `${BRAND.displayName} at http://127.0.0.1:5000, or set up https for your domain. ` +
       'A plain http address that is not on this machine can never use a ' +
       'microphone, whatever the settings say.'
     )
