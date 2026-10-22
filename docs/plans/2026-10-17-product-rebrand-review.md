@@ -26,7 +26,7 @@ Repository: https://github.com/ranjeetthorat/ai-algo
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Rebranding: decide the design language and implement it | Planned in detail below |
+| 1 | Rebranding: decide the design language and implement it | Done 2026-10-23 (v1.0.0) |
 | 2 | Cleanup: remove unnecessary code, modules and integrations | Not started |
 | 3 | Cross-OS compatibility, distribution and release | Not started |
 | 4 | Multi-broker | Not started |
@@ -47,7 +47,7 @@ Each phase is split into milestones. Each milestone has a deliverable and exit c
 | M1.6 | Design language applied | Dev | Tokens and component rules applied across all pages, including charts (`lib/trading/chartTheme.ts`), the Flow editor, scalping, the option tools and analyzer mode | Visual review of every page in the navigation, in both themes, signed off | M1.2, M1.3 | Done 2026-10-17 (code). Visual review limited to pages reachable without a broker login, see M1.9 notes |
 | M1.7 | Backend user-facing text | Dev | Email templates (`utils/email_utils.py`), Telegram and WhatsApp bot messages, MCP metadata (`blueprints/mcp_oauth.py` documentation URLs), user-facing error text | A test email, Telegram alert and WhatsApp alert all show our brand | M1.1 | Done 2026-10-17 |
 | M1.8 | Repository face | Dev | Rebranded README, `NOTICE`, `SECURITY.md` and `CONTRIBUTING.md` contacts. Update `CLAUDE.md` so its repo, docs and upstream references match a hard fork | Someone landing on the GitHub repo sees only our product, with attribution | M1.1 | Done 2026-10-17. SECURITY.md points to the support site until a security email exists |
-| M1.9 | Brand check and release | Dev | `scripts/brand-check.mjs` (lists visible "OpenAlgo" text and upstream links in `frontend/src` and user-facing backend text, ignoring identifiers), run locally. Frontend tests updated where they assert on changed text. A locally built `frontend/dist` committed to `main`. Release tag | Brand check, `uv run pytest test/ -v`, `npm test` and `npm run build` all pass locally. Tag pushed | M1.4 to M1.8 | Checks done 2026-10-17. Commit, dist on main and the 1.0.0 tag wait for the owner |
+| M1.9 | Brand check and release | Dev | `scripts/brand-check.mjs` (lists visible "OpenAlgo" text and upstream links in `frontend/src` and user-facing backend text, ignoring identifiers), run locally. Frontend tests updated where they assert on changed text. A locally built `frontend/dist` committed to `main`. Release tag | Brand check, `uv run pytest test/ -v`, `npm test` and `npm run build` all pass locally. Tag pushed | M1.4 to M1.8 | Done 2026-10-23. Released as `v1.0.0` on `main` with a locally built dist |
 
 Found during M1.1, for later milestones:
 
