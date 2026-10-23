@@ -34,7 +34,9 @@ if __name__ == "__main__":
     _debug = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
     _is_reloader_parent = _debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
     if not _is_reloader_parent:
-        print("\033[93mStarting OpenAlgo...\033[0m", flush=True)
+        # The product name, not utils.brand.display_name(): importing utils.brand
+        # pulls in utils.logging (about 5 s), and this line exists to print first.
+        print("\033[93mStarting FastAlgo...\033[0m", flush=True)
 
 import mimetypes
 

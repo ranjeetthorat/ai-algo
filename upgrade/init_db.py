@@ -270,7 +270,7 @@ if main_db_path and os.path.exists(main_db_path):
                     print(f"    - {username} <{email}> ({role})")
                 if not users:
                     print()
-                    print("  No account exists yet. Start OpenAlgo and visit /setup to")
+                    print("  No account exists yet. Start FastAlgo and visit /setup to")
                     print("  create one. This is the expected state on a fresh install.")
 
             for table, label in (("auth", "Broker sessions"), ("api_keys", "API keys")):
@@ -385,5 +385,5 @@ print()
 print("  If you still cannot log in, the cause is not the database. Confirm the")
 print("  username (case-sensitive, and not your email address), then report the")
 print("  issue with the FULL startup output from the very first line -- the part")
-print("  printed before 'Starting OpenAlgo...' is the part that matters.")
+print("  printed before 'Starting FastAlgo...' is the part that matters.")
 sys.exit(0)
