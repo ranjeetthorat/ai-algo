@@ -85,7 +85,7 @@ Detailed procedures live in `.claude/skills/` and load on demand:
 
 - **Single user per deployment** — no multi-user, no privilege escalation. One user, one broker session per instance.
 - **Self-hosted on the user's own server** — server access equals full control. No SaaS component.
-- All official install scripts (`install.sh`, `install-docker.sh`, `install-multi.sh`, `docker-run.sh`, `docker-run.bat`, `start.sh`) auto-generate unique `APP_KEY` and `API_KEY_PEPPER` via `secrets.token_hex(32)`.
+- The bare-metal install scripts (`install.sh`, `install-multi.sh`) auto-generate unique `APP_KEY` and `API_KEY_PEPPER` via `secrets.token_hex(32)`. The Docker tooling was removed in Phase 2; there is no container build.
 - **SEBI static IP mandate** (effective April 1, 2026): transactional API orders require broker-side static IP whitelisting. Delta Exchange (crypto) enforces the same. Stolen broker credentials cannot be used from an attacker's machine — the broker rejects non-registered IPs. Attacks routed *through* the OpenAlgo server (which holds the registered IP) remain viable.
 - External platforms (TradingView, GoCharting, Chartink) send API keys in the JSON body or URL query params — they cannot set custom HTTP headers. This is an accepted architectural trade-off.
 - The stdio MCP server (`mcp/mcpserver.py`) is local-only and not remotely exposed. `blueprints/mcp_http.py` and `blueprints/mcp_oauth.py` are the remote-facing MCP surfaces.
@@ -95,7 +95,7 @@ Detailed procedures live in `.claude/skills/` and load on demand:
 
 ### Eventlet + Gunicorn (production)
 
-Production (Ubuntu direct and Docker) runs `gunicorn --worker-class eventlet -w 1`:
+Production (Ubuntu, via `install.sh`) runs `gunicorn --worker-class eventlet -w 1`:
 
 - **No `asyncio`.** Eventlet monkey-patches the stdlib and is incompatible with `asyncio.run()`, `async`/`await`, and `asyncio.get_event_loop()`. Async work must use eventlet green threads or run on a separate real OS thread — see `telegram_bot_service.py:_render_plotly_png` for the pattern.
 - **Single worker (`-w 1`) is mandatory.** Flask-SocketIO state is in-process and cannot be shared across workers.
@@ -120,7 +120,7 @@ and the cache-invalidation publisher (`database/cache_invalidation.py`).
 
 - **Never make a publisher `bind()`.** ZMQ allows many PUBs to connect to one bound SUB, so publishers across processes share one fixed port with no contention.
 - **`ZMQ_PORT` is fixed by config and never drifts.** No port scan, no `5555 -> 5556` fallback, no runtime mutation of `os.environ["ZMQ_PORT"]`. `install-multi.sh` gives each instance its own `ZMQ_PORT` (`5555 + i-1`) and each stays put.
-- **Why:** under gunicorn+eventlet the proxy runs *out of process* (a subprocess via `install.sh`, or a separate `python -m websocket_proxy.server` on Docker `start.sh`) while the cache-invalidation publisher runs inside gunicorn. If a publisher binds, the two processes race for the port; the loser silently slides to the next port while the SUB stays put, so **`subscribe` succeeds but no ticks are delivered**. Works on the single-process dev server, broken only under eventlet — historically very hard to spot. Broker-agnostic.
+- **Why:** under gunicorn+eventlet the proxy runs *out of process* (a subprocess via `install.sh`, or a separate `python -m websocket_proxy.server` in standalone mode) while the cache-invalidation publisher runs inside gunicorn. If a publisher binds, the two processes race for the port; the loser silently slides to the next port while the SUB stays put, so **`subscribe` succeeds but no ticks are delivered**. Works on the single-process dev server, broken only under eventlet — historically very hard to spot. Broker-agnostic.
 
 ### Multi-session login must not tear down the shared broker feed
 
@@ -413,6 +413,11 @@ they are generated at `/apikey` and hashed with pepper before storage.
 **Always use uv.** Never global Python, never a hand-managed venv, never activate
 anything: `uv run app.py`, `uv run python script.py`, `uv run pytest test/ -v`,
 `uv add package`, `uv sync`. Python 3.12+.
+
+**Known failing tests.** Some tests fail on a clean checkout for reasons
+unrelated to any change. They are listed, with causes and a skip command, in
+[`docs/test/KNOWN_FAILING_TESTS.md`](docs/test/KNOWN_FAILING_TESTS.md). Check it
+before treating a red run as a regression, and remove an entry when you fix it.
 
 **Logging.** `logger = get_logger(__name__)` from `utils/logging.py` in every
 module. Error logging is always `logger.exception()` — it captures the traceback

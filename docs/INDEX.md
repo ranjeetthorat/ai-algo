@@ -63,6 +63,7 @@ need → drill into the specific file. Don't load everything at once.
 | Migration plans | [migration/](migration/) |
 | Implementation plans | [plans/](plans/) |
 | Testing guides | [test/](test/) |
+| Known failing tests (check before treating a red run as a regression) | [test/KNOWN_FAILING_TESTS.md](test/KNOWN_FAILING_TESTS.md) |
 | XTS API | [xtsapi.md](xtsapi.md) |
 
 ---
