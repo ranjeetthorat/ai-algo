@@ -8,6 +8,35 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-23
+
+### Cleanup Release
+
+4 commits since 1.0.0. Full notes:
+[version-1.1.0-released.md](releases/version-1.1.0-released.md). No database
+migration, no setting and no API change.
+
+### Highlights
+
+- The Docker tooling is removed: `Dockerfile`, compose, `start.sh`, the Docker
+  install scripts, their docs and the Docker CI jobs. Bare-metal install and
+  update scripts stay.
+- New `static/` folder: the home page as one self-contained HTML file, without
+  log-in or installation links, for hosting on S3 or GitHub Pages.
+- The startup banner reads "Starting FastAlgo..." instead of "Starting
+  OpenAlgo...".
+- Tests already failing before this release are recorded, with causes and a skip
+  command, in `docs/test/KNOWN_FAILING_TESTS.md`.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - M2.1: Docker removal, the public site and the startup
+  banner fix.
+
 ## [2.0.2.5] - 2026-09-14
 
 ### Voice Agent Release
