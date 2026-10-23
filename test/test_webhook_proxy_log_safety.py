@@ -9,8 +9,6 @@ ROOT = Path(__file__).resolve().parents[1]
 PROXY_TEMPLATES = (
     "install/install.sh",
     "install/install-multi.sh",
-    "install/install-docker.sh",
-    "install/install-docker-multi-custom-ssl.sh",
     "install/change-domain.sh",
     "install/update.sh",
 )
@@ -18,9 +16,6 @@ PROXY_TEMPLATES = (
 FRESH_CONFIG_GUARDS = {
     "install/install.sh": 3,
     "install/install-multi.sh": 3,
-    "install/install-docker.sh": 3,
-    # The other two server blocks belong to the unrelated Portainer domain.
-    "install/install-docker-multi-custom-ssl.sh": 2,
     "install/change-domain.sh": 3,
 }
 
@@ -80,7 +75,7 @@ def test_update_migration_renders_validates_and_rolls_back_the_same_guard() -> N
 
 @pytest.mark.parametrize(
     "relative_path",
-    ("start.sh", "install/install.sh", "install/install-multi.sh"),
+    ("install/install.sh", "install/install-multi.sh"),
 )
 def test_shipped_gunicorn_commands_do_not_enable_raw_access_logs(relative_path):
     text = (ROOT / relative_path).read_text(encoding="utf-8")

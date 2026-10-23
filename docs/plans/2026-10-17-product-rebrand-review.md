@@ -27,7 +27,7 @@ Repository: https://github.com/ranjeetthorat/ai-algo
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Rebranding: decide the design language and implement it | Done 2026-10-23 (v1.0.0) |
-| 2 | Cleanup: remove unnecessary code, modules and integrations | Not started |
+| 2 | Cleanup: remove unnecessary code, modules and integrations | In progress (M2.1 done 2026-10-23) |
 | 3 | Cross-OS compatibility, distribution and release | Not started |
 | 4 | Multi-broker | Not started |
 
@@ -83,6 +83,21 @@ I recommend **GitHub Milestones** on ranjeetthorat/ai-algo:
 - One issue per deliverable inside it, with labels `phase-1` and the area (`frontend`, `backend`, `design`, `docs`).
 - A GitHub Project board (To do, In progress, Review, Done) gives the partners a single view.
 - This table stays the plan, and GitHub stays the progress record. Update the Status column here when a milestone closes.
+
+### 3.2 Phase 2 milestones
+
+Milestones are added as the owner scopes them.
+
+| ID | Milestone | Deliverable | Exit criteria | Status |
+| --- | --- | --- | --- | --- |
+| M2.1 | Docker removal and public site | Docker tooling deleted: `Dockerfile`, `docker-compose.yaml`, `.dockerignore`, `docker-build.sh`/`.bat`, `start.sh`, `DOCKER_README.md`, the six Docker scripts and readmes in `install/`, `docs/docker/`, `docs/design/11-docker/`, and the `docker-build` and `docker-manifest` CI jobs. References repointed in tests, the security-audit and broker-integration skills, `CLAUDE.md`, `.sample.env` and the broker guide. New `static/` folder: the home page as one self-contained HTML file, without log-in or installation links, for S3 or GitHub Pages | No file in the repo depends on a deleted file. `uv run pytest test/` and the brand check pass. The static page renders in light, dark and at 375 px with no horizontal scroll | Done 2026-10-23 |
+
+Found during M2.1, for later milestones:
+
+- **Code that still handles Docker:** `app.py` (standalone mode, `/.dockerenv` detection), `blueprints/admin.py` (version without `.git`, `.env` bind mounts), `utils/env_check.py`, `utils/oauth_keys.py`, `utils/ip_helper.py` and `blueprints/mcp_http.py`. Their comments still describe the Docker case. Removing that code changes behaviour, so it needs its own milestone with tests.
+- **Upstream docs that still describe Docker:** `docs/userguide/04-installation/`, `docs/userguide/remote-mcp.md`, `install/Remote-MCP-readme.md`, `docs/telegram-chart-rendering.md`, `docs/prd/ci-cd*.md` and the FastAPI migration plan. They go with the wider upstream-docs cleanup. Release notes under `docs/releases/` are history and stay.
+- **Tests already failing before M2.1:** 13 failures, 6 errors and one occasional hang, none in files M2.1 touched. Causes, a skip command and suggested fixes are in [`docs/test/KNOWN_FAILING_TESTS.md`](../test/KNOWN_FAILING_TESTS.md). Fixing or moving them is a candidate milestone.
+- **Bare-metal tooling kept on purpose:** `install/install.sh`, `install-multi.sh`, `update.sh`/`.bat`, `change-domain.sh`, `requirements-nginx.txt` and `Caddyfile` (local HTTPS dev). Removing `install/` still waits on the client-install runbook (section 6).
 
 ---
 

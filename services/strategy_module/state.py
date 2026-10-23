@@ -2,8 +2,8 @@
 
 The original this is ported from keeps this state in Redis. Here it is a plain
 dict, and that is a deliberate upgrade rather than a downgrade: OpenAlgo runs
-as a single Gunicorn worker (``-w 1``, hardcoded in ``start.sh`` and
-``install/install.sh``, with no environment variable to raise it), so there is
+as a single Gunicorn worker (``-w 1``, hardcoded in ``install/install.sh``
+and ``install/install-multi.sh``, with no environment variable to raise it), so there is
 exactly one process that can own a run. A network hop to Redis would buy no
 correctness and would put an await on the hottest path in the module.
 

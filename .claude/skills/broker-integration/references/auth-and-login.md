@@ -237,38 +237,13 @@ validation while printing a menu that omits your broker.
 | --- | --- | --- |
 | `install/install.sh` | `valid_brokers=` (~L113) | `log_message "\nValid brokers: ..."` (~L370) |
 | `install/install-multi.sh` | `valid_brokers=` (~L53) | `log_message "\nValid brokers: ..."` (~L156) |
-| `install/install-docker.sh` | `valid_brokers=` (~L45) | multi-line `echo` block (~L115-119) |
-| `install/docker-run.sh` | `VALID_BROKERS=` (~L47) | multi-line `echo` block (~L211-216) |
-| `install/docker-run.bat` | `set VALID_BROKERS=` (~L43) | `echo` block (~L163) |
-| `install/install-docker-multi-custom-ssl.sh` | `valid_brokers=` (~L50) | none |
 
 The display blocks are wrapped across several lines in alphabetical order, so
 inserting a name means editing the right continuation line, not appending.
 
-### `start.sh` — not an installer, and the one with real consequences
-
-`start.sh` sits at the repo **root**, not in `install/`, and it is the Docker
-container `CMD` (`Dockerfile:99`) — the runtime entrypoint, not a setup script.
-
-Around line 51 it carries a broker list inside a shell default:
-
-```sh
-VALID_BROKERS = '${VALID_BROKERS:-fivepaisa,fivepaisaxts,aliceblue,angel,arrow,...}'
-```
-
-That is the **fallback baked into cloud deployments**. When the container starts
-on Railway/Render (detected via `HOST_SERVER`) with no `.env` present, `start.sh`
-generates one, and this string becomes `VALID_BROKERS` unless the platform
-supplies its own.
-
-**This is the one broker list whose omission is functional, not cosmetic.** Miss
-a name in an installer display block and the user sees an incomplete menu. Miss
-it here and the broker is genuinely unavailable on every cloud Docker deploy
-that relies on the default — the login dropdown filters against `VALID_BROKERS`,
-so it simply will not appear, while every bare-metal install works fine. That
-asymmetry makes it hard to reproduce locally.
-
-Update it in the same edit as `.sample.env`; the two lists should always match.
+The Docker tooling (`start.sh`, `install-docker*.sh`, `docker-run.*`) was
+removed in Phase 2 of the FastAlgo fork, so its broker lists no longer exist.
+The bare-metal scripts above and `.sample.env` are the lists to keep in step.
 
 There is a second hardcoded default worth knowing about, though it is not a list
 you maintain: `websocket_proxy/server.py` falls back to
@@ -282,16 +257,14 @@ rather than a clear configuration error.
 | --- | --- |
 | `install/README.md` | comma-separated block (~L42) |
 | `README.md` | "Supported Brokers" list |
-| `install/Docker-install-readme.md` | **markdown table**, one row per broker: `\| Display Name \| \`code\` \| XTS API \|` — easy to miss because it is not a comma list |
 
 ### Verify, don't trust
 
-These copies **do** drift — as of this writing three display lists and the
-Docker readme table are missing `arrow`, the most recently added broker, while
+These copies **do** drift — at one point three display lists were missing `arrow`, the most recently added broker, while
 every validation list has it. After adding a broker, check every place at once:
 
 ```bash
-grep -rn "<newbroker>" install/ start.sh .sample.env README.md \
+grep -rn "<newbroker>" install/ .sample.env README.md \
   frontend/src/pages/BrokerSelect.tsx websocket_proxy/__init__.py
 ```
 

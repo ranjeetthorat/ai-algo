@@ -36,8 +36,8 @@ OUTDIR = REPO / "tmp" / "security-audits" / NOW.strftime("%Y-%m")
 TMP = OUTDIR
 REPORT = OUTDIR / f"security_audit_{NOW.strftime('%Y-%m-%d_%H%M')}.xlsx"
 
-# Publicly-known values that must never be live. From start.sh's preflight
-# block -- every Docker install before v2.0.0.6 shipped these.
+# Publicly-known values that must never be live. Every upstream Docker install
+# before v2.0.0.6 shipped these (the Docker tooling was removed in Phase 2).
 LEAKED = {
     "3daa0403ce2501ee7432b75bf100048e3cf510d63d2754f952729a991d8e2417",
     "a25d94718479b170c16278e321ea6c989358bf499a658fd20c90033cef8ce772",
@@ -865,8 +865,8 @@ def check_app_invariants():
         ("App: 404 probe tracking active", "app.py", r"Error404Tracker", "MEDIUM"),
         ("App: session cleanup teardown", "app.py", r"teardown_appcontext", "MEDIUM"),
         ("App: sensitive-data log filter", "utils/logging.py", r"SensitiveDataFilter", "HIGH"),
-        ("App: single gunicorn worker documented", "start.sh", r"--workers 1", "LOW"),
-        ("App: ZMQ bound to loopback", "start.sh", r"ZMQ_HOST = '127\.0\.0\.1'", "HIGH"),
+        ("App: single gunicorn worker documented", "install/install.sh", r"-w 1 \\", "LOW"),
+        ("App: ZMQ bound to loopback", ".sample.env", r"ZMQ_HOST\s*=\s*'127\.0\.0\.1'", "HIGH"),
     ]
     for name, path, pat, sev in checks:
         p = REPO / path

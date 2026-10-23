@@ -1094,7 +1094,7 @@ is_docker = (
 
 if is_docker:
     logger.debug(
-        "Running in Docker/standalone mode - WebSocket server started separately by start.sh"
+        "Running in standalone mode - WebSocket server is started as a separate process"
     )
 else:
     # Under gunicorn+eventlet, start_websocket_proxy() spawns a child *process*

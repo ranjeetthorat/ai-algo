@@ -1032,17 +1032,7 @@ VALID_BROKERS = '...,your_broker,...'
 
 **File:** `.sample.env` (line 22)
 
-### 12.3. `start.sh` — Cloud/Docker VALID_BROKERS Default
-
-The startup script has a default VALID_BROKERS list for cloud deployments:
-
-```bash
-VALID_BROKERS = '${VALID_BROKERS:-fivepaisa,...,your_broker,...,zerodha}'
-```
-
-**File:** `start.sh` (line 51)
-
-### 12.4. `install/install.sh` — Installation Script
+### 12.3. `install/install.sh` — Installation Script
 
 Two functions need updating:
 
@@ -1078,23 +1068,11 @@ log_message "\nValid brokers: fivepaisa,...,your_broker,...,zerodha" "$BLUE"
 
 **File:** `install/install.sh` (line 358)
 
-### 12.5. `install/install-multi.sh`
+### 12.4. `install/install-multi.sh`
 
 Same changes as `install.sh` — update `validate_broker()`, `is_xts_broker()`, and the broker selection prompt.
 
-### 12.6. `install/install-docker.sh`
-
-Same changes as above for Docker-based installation.
-
-### 12.7. `install/install-docker-multi-custom-ssl.sh`
-
-Same changes as above for multi-instance Docker with custom SSL.
-
-### 12.8. `install/docker-run.sh` and `install/docker-run.bat`
-
-These scripts have a default `VALID_BROKERS` list in their generated `.env` file. Add your broker there.
-
-### 12.9. `websocket_proxy/broker_factory.py` — Adapter Registration
+### 12.5. `websocket_proxy/broker_factory.py` — Adapter Registration
 
 The broker factory dynamically imports and registers your streaming adapter. If you follow the naming convention, **no code changes needed** — it auto-discovers:
 
@@ -1117,11 +1095,11 @@ register_adapter("your_broker", YourBrokerAdapter)
 
 The factory also handles connection pooling automatically via `_PooledAdapterWrapper`. See [Step 9](#11-step-9-implement-websocket-streaming) for full details.
 
-### 12.10. `blueprints/brlogin.py` — Callback Handler
+### 12.6. `blueprints/brlogin.py` — Callback Handler
 
 As detailed in [Step 3](#5-step-3-register-the-broker-callback-in-brloginpy), add your broker's callback handling logic.
 
-### 12.11. Frontend — React Broker Components (If TOTP Required)
+### 12.7. Frontend — React Broker Components (If TOTP Required)
 
 If your broker requires TOTP/credential input (not OAuth redirect), you need a React component:
 
@@ -1144,14 +1122,9 @@ The route `/broker/your_broker/totp` must be handled by the React router.
 | `broker/your_broker/streaming/*` | Create 3 files |
 | `README.md` → Supported Brokers | Append broker name (alphabetical) |
 | `.sample.env` → VALID_BROKERS | Append broker name |
-| `start.sh` → VALID_BROKERS default | Append broker name |
 | `install/install.sh` → `validate_broker()` | Append broker name |
 | `install/install.sh` → broker prompt | Append broker name |
 | `install/install-multi.sh` | Same as install.sh |
-| `install/install-docker.sh` | Same as install.sh |
-| `install/install-docker-multi-custom-ssl.sh` | Same as install.sh |
-| `install/docker-run.sh` | Append broker name |
-| `install/docker-run.bat` | Append broker name |
 | `websocket_proxy/broker_factory.py` | Auto-discovered if naming convention followed |
 | `blueprints/brlogin.py` | Add callback handler |
 | `frontend/` (if TOTP broker) | Add React TOTP page |
@@ -1469,7 +1442,7 @@ This inventory is derived from `broker/*/plugin.json`. Authentication requiremen
 >
 > # Check for hard-coded counts across docs, skills, and shipped UI copy
 > rg -n "\b3[0-9]\+?\s*(plugins?|brokers?|Indian brokers?)\b|Inventory \(3[0-9]\)" \
->    README.md CONTRIBUTING.md DOCKER_README.md DISCOVERY_MAP.md \
+>    README.md CONTRIBUTING.md DISCOVERY_MAP.md \
 >    docs/ .claude/skills/ frontend/src/ \
 >    --glob '!docs/audit/**' --glob '!docs/releases/**' --glob '!docs/superpowers/**'
 > ```

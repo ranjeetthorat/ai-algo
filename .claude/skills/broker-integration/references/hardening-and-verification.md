@@ -117,12 +117,10 @@ Then run the **`fd-audit`** skill on the whole change.
 - [ ] NO hardcoded market timings in the broker folder
 - [ ] all REST via the shared pooled httpx client; explicit timeout on big downloads
 - [ ] broker id added to VALID_BROKERS + all install scripts + READMEs + BrokerSelect.tsx + websocket_proxy registration
-- [ ] **both** lists updated in each install script — the `valid_brokers` validation string *and* the separate human-facing display block (5 scripts have two; see `auth-and-login.md`)
-- [ ] `start.sh` (repo root, the Docker `CMD`) — the `${VALID_BROKERS:-...}` fallback. **Functional, not cosmetic**: missing here means the broker is unavailable on cloud/Railway deploys while every bare-metal install works
-- [ ] `install/Docker-install-readme.md` table row added (markdown table, not a comma list)
+- [ ] **both** lists updated in each install script — the `valid_brokers` validation string *and* the separate human-facing display block (both bare-metal scripts have two; see `auth-and-login.md`)
 - [ ] frontend: `allBrokers[]` entry **and** a `switch` login-URL case in `BrokerSelect.tsx`
 - [ ] frontend: if form-login, a `brokerConfigs` entry **and** a `brokerNames` entry in `BrokerTOTP.tsx` (unconfigured brokers silently fall back to a userid/password/totp `default` that may be the wrong fields)
-- [ ] verified with one sweep: `grep -rn "<newbroker>" install/ start.sh .sample.env README.md frontend/src/pages/ websocket_proxy/__init__.py`
+- [ ] verified with one sweep: `grep -rn "<newbroker>" install/ .sample.env README.md frontend/src/pages/ websocket_proxy/__init__.py`
 - [ ] no emojis or icons anywhere (repo-wide rule)
 
 ## Live test plan (needs credentials + SEBI static-IP whitelisting)

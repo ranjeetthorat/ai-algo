@@ -448,7 +448,7 @@ When running strategies with numerical libraries (NumPy, SciPy, Numba) in Docker
 | `NUMEXPR_NUM_THREADS` | NumExpr thread limit |
 | `NUMBA_NUM_THREADS` | Numba JIT thread limit |
 
-For 2GB containers, set all to `1`. For 4GB+, use `2`. See [Docker Configuration](../11-docker/README.md) for details.
+On a 2GB server, set all to `1`. For 4GB+, use `2`.
 
 > **Reference**: [GitHub Issue #822](https://github.com/marketcalls/openalgo/issues/822)
 

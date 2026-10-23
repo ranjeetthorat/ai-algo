@@ -79,7 +79,6 @@ The current plugin inventory contains 36 broker directories with `plugin.json`. 
 
 | Module | Description |
 |---|---|
-| [11 Docker](./11-docker/) | Container build and compose runtime |
 | [12 Ubuntu Server](./12-ubuntu-server/) | Host deployment |
 | [16 Centralized Logging](./16-centralized-logging/) | Python logs and file retention |
 | [21 Admin Section](./21-admin-section/) | Runtime and Remote MCP administration |

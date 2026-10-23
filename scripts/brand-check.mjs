@@ -42,12 +42,19 @@ const BACKEND_FILES = [
   'services/agent/prompts.py',
   'frontend/index.html',
   'frontend/public/docs/gocharting_webhook_setup.md',
+  'static/index.html',
 ]
 
 // Files allowed to name OpenAlgo, and why.
 const ALLOW = {
   'frontend/src/brand/brand.ts': 'AGPL attribution and upstream link',
   'frontend/src/pages/About.tsx': 'AGPL attribution page',
+}
+
+// Single lines allowed to name OpenAlgo in a file that is otherwise checked.
+// The rest of the file still reports, unlike a whole-file ALLOW entry.
+const ALLOW_LINE = {
+  'static/index.html': /Based on OpenAlgo, licensed under AGPL-3\.0/,
 }
 
 const VISIBLE_NAME = /OpenAlgo/
@@ -118,6 +125,7 @@ function scan(file) {
   const hits = []
   text.split('\n').forEach((line, i) => {
     if (!line.trim() || isIdentifierLine(line)) return
+    if (ALLOW_LINE[rel]?.test(line) && !UPSTREAM_LINK.test(line)) return
     // Drop identifier-style occurrences (OpenAlgoChart, useOpenAlgoX) before testing.
     const visible = line.replace(/\b\w*OpenAlgo[A-Z]\w*\b/g, '').replace(/\bopenalgo[-_]\w+/g, '')
     if (VISIBLE_NAME.test(visible) || UPSTREAM_LINK.test(line)) {

@@ -348,7 +348,7 @@ would have been silently absent.
 
 `services/strategy_module/state.py` holds live run state as a plain in-process
 dict. That is an upgrade over the Redis original, not a compromise: `-w 1` is
-hardcoded in `start.sh` and `install/install.sh` with no variable to raise it,
+hardcoded in `install/install.sh` and `install/install-multi.sh` with no variable to raise it,
 so exactly one process can own a run, and the network hop bought only latency on
 the hottest path. Durability lives in `sm_strategy_checkpoint` plus `recovery`.
 
