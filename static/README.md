@@ -21,8 +21,11 @@ Upload the contents of this folder as they are, with `index.html` at the root.
 Include `site-config.js`: without it the download button and the Telegram links
 stay hidden.
 
-**For each release**, upload the new zip from `release/`, then change
-`downloadUrl` and `downloadNote` in `site-config.js`.
+**For each release**, `scripts/build_release.py` writes `latest.json` here and
+fills in `downloadUrl` and `downloadNote` in `site-config.js`. Upload the new zip
+from `release/` first, then this folder. Installed control panels read
+`latest.json` from the site root to offer the update, so it must be uploaded
+with the rest.
 
 - **S3:** enable static website hosting on the bucket, set the index document to
   `index.html`, and upload `index.html` and `assets/`.

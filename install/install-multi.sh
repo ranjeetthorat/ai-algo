@@ -114,7 +114,7 @@ log_message "Setting up $INSTANCES OpenAlgo instances" "$GREEN"
 
 # Base configuration
 BASE_DIR="/var/python/openalgo-flask"
-REPO_URL="https://github.com/marketcalls/openalgo.git"
+REPO_URL="https://github.com/ranjeetthorat/ai-algo.git"
 FLASK_PORT_BASE=5000
 WS_PORT_BASE=8765
 ZMQ_PORT_BASE=5555

@@ -27,15 +27,17 @@ REPO = Path(__file__).resolve().parent.parent
 @pytest.mark.parametrize(
     ("state", "usable"),
     [
-        ("stopped", {"start", "settings", "maintenance"}),
-        ("crashed", {"start", "settings", "maintenance"}),
-        ("error", {"start", "settings", "maintenance"}),
-        ("starting", {"stop", "restart"}),
-        ("running", {"stop", "restart", "open"}),
-        ("restarting", {"stop", "restart"}),
+        # An update stops a running server itself, so it is offered in every
+        # state but stopping and an install with no broker yet.
+        ("stopped", {"start", "settings", "maintenance", "update"}),
+        ("crashed", {"start", "settings", "maintenance", "update"}),
+        ("error", {"start", "settings", "maintenance", "update"}),
+        ("starting", {"stop", "restart", "update"}),
+        ("running", {"stop", "restart", "open", "update"}),
+        ("restarting", {"stop", "restart", "update"}),
         ("stopping", set()),
         # Running with no keeper: Start takes it over; Restart needs a keeper.
-        ("unsupervised", {"start", "stop"}),
+        ("unsupervised", {"start", "stop", "update"}),
         # A new install with no .env yet: only setting up a broker is possible.
         ("setup", {"setup"}),
     ],
@@ -171,3 +173,66 @@ def test_first_setup_writes_an_env_the_app_will_start_with(install, tk_root, mon
     assert len(values["APP_KEY"]) == 64
     assert window.state_label.cget("text") == "Stopped"
     assert window.buttons["setup"].winfo_manager() == ""
+
+
+# --- updates ---------------------------------------------------------------------
+
+NEWER = panel.update.Manifest("1.3.0", "https://example.test/FastAlgo-1.3.0.zip", "a" * 64, 10)
+
+
+def _drain_until_idle(window, tk_root, seconds=10.0):
+    import time
+
+    deadline = time.monotonic() + seconds
+    while window.busy and time.monotonic() < deadline:
+        tk_root.update()
+        time.sleep(0.05)
+    window._drain_events()
+
+
+def test_update_notice_appears_only_when_a_newer_version_is_found(install, tk_root):
+    (install.app / "utils" / "version.py").write_text('VERSION = "1.2.0"\n', encoding="utf-8")
+    window = panel.Panel(tk_root, install)
+    assert window.update_bar.winfo_manager() == ""
+    window.events.put(("check", "available", NEWER))
+    window._drain_events()
+    window.refresh()
+    assert window.update_bar.winfo_manager() == "pack"
+    assert "Version 1.3.0 is available (you have 1.2.0)" in window.update_label.cget("text")
+    assert window.update_button.instate(["!disabled"])
+
+
+def test_update_now_applies_the_release_and_reopens_the_panel(install, tk_root, monkeypatch):
+    calls = {}
+    monkeypatch.setattr(panel.messagebox, "askokcancel", lambda *a, **k: True)
+    monkeypatch.setattr(panel.messagebox, "showinfo", lambda *a, **k: None)
+    monkeypatch.setattr(panel.control, "stop", lambda paths: calls.setdefault("stop", True))
+
+    def install_latest(paths, log):
+        log("Downloading version 1.3.0")
+        return panel.update.Result("1.2.0", "1.3.0", paths.home / "updates" / "previous")
+
+    monkeypatch.setattr(panel.update, "install_latest", install_latest)
+    window = panel.Panel(tk_root, install)
+    monkeypatch.setattr(window, "reopen", lambda: calls.setdefault("reopen", True))
+    window.available = NEWER
+    window.run_update()
+    _drain_until_idle(window, tk_root)
+    assert calls == {"reopen": True}, "a stopped server is not stopped or started"
+    assert "Downloading version 1.3.0" in window.log_text.get("1.0", "end")
+
+
+def test_a_refused_update_shows_its_own_message(install, tk_root, monkeypatch):
+    shown = []
+    monkeypatch.setattr(panel.messagebox, "askokcancel", lambda *a, **k: True)
+    monkeypatch.setattr(panel.messagebox, "showerror", lambda title, text, **k: shown.append(text))
+
+    def refuse(paths, log):
+        raise panel.update.UpdateRefused("The download was damaged, so it was not used.")
+
+    monkeypatch.setattr(panel.update, "install_latest", refuse)
+    window = panel.Panel(tk_root, install)
+    window.available = NEWER
+    window.run_update()
+    _drain_until_idle(window, tk_root)
+    assert shown == ["The download was damaged, so it was not used."]

@@ -672,8 +672,6 @@ Nginx: the main proxy block forces a WebSocket upgrade header" "$YELLOW"
         log_message "    proxy_set_header Connection \"\";" "$YELLOW"
         log_message "Leave the /ws, /ws/ and /socket.io/ blocks unchanged, then run:" "$YELLOW"
         log_message "    sudo nginx -t && sudo systemctl reload nginx" "$YELLOW"
-        log_message "Background: https://github.com/marketcalls/openalgo/issues/1807
-" "$YELLOW"
     }
 
     check_nginx_upgrade_header
@@ -743,7 +741,7 @@ if [ "$SERVER_MODE" = true ]; then
 else
     log_message "\nNext Steps:" "$YELLOW"
     log_message "  Start application: uv run app.py" "$BLUE"
-    log_message "  API documentation: https://docs.openalgo.in/api-documentation/v1" "$BLUE"
+    log_message "  Help and support: https://www.tinycompute.site" "$BLUE"
 fi
 
 if [ -n "$NEW_VARS" ]; then

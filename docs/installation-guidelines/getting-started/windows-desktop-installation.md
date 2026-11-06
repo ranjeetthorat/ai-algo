@@ -12,8 +12,14 @@ On a development machine, with the frontend built and the work committed:
 uv run python scripts/build_release.py
 ```
 
-This writes `release/FastAlgo-<version>.zip` and a `.sha256` file beside it.
-`release/` is gitignored; upload the zip wherever clients download from.
+This writes `release/FastAlgo-<version>.zip`, a `.sha256` file and
+`latest.json` beside it. `release/` is gitignored. It also copies `latest.json`
+into `static/` and fills in the download link and note in
+`static/site-config.js`, taking the upload folder from the current link (pass
+`--url-base https://...` to change it, `--no-announce` to build the zip only).
+
+Bump the version first: installed panels offer only a newer version, and the
+zip's name comes from it.
 
 - The zip holds the source exactly as Git tracks it, plus the built
   `frontend/dist`. It never contains `.git`, `.env`, databases or logs.
@@ -22,6 +28,49 @@ This writes `release/FastAlgo-<version>.zip` and a `.sha256` file beside it.
 - The build runs `scripts/brand-check.mjs` when Node.js is present and stops if
   it fails.
 - `--allow-dirty` builds from uncommitted work. Use it for test builds only.
+
+## Publish a release
+
+In this order, so a panel never sees an announcement before its zip exists:
+
+1. Upload the zip to the folder `latest.json` names (today the Vercel blob store).
+2. Commit `static/latest.json` and `static/site-config.js`.
+3. Upload the `static/` folder to the public site. Installed panels read
+   `https://fastalgo.tinycompute.site/latest.json`, check it when they open and
+   every 6 hours, and show the update from then on.
+
+`latest.json` holds the version, link, size, SHA-256 and the bold summary line of
+`docs/releases/version-<version>-released.md`, which the panel shows beside the
+offer. One installation can read a different announcement with
+`"update_url": "https://..."` in its `panel.json`.
+
+## Update a client
+
+The client clicks **Update now** in the control panel, or **Check for updates**,
+or **Update from file** for a zip sent to them. A running server is stopped
+first, after asking, and started again afterwards; running Python strategies
+stop and do not restart by themselves. The panel reopens on the new version.
+
+What happens (`launcher/update.py`), and what it keeps:
+
+- The zip is checked: its size and SHA-256 against `latest.json`, that it is a
+  release of this product, and that it is newer than what is installed.
+- Every program file listed in the installed `RELEASE_FILES` is moved aside to
+  `C:\FastAlgo\updates\previous-<old version>-<time>`, then the new files are
+  moved in. Everything else stays: `.env`, databases, logs, saved strategies,
+  `.venv`, Python and the cache.
+- The SQLite databases are copied into that same folder, then `uv sync` installs
+  only the packages whose version changed and `upgrade/migrate_all.py` runs.
+- Any failure puts the previous program, databases and dependencies back, and
+  says so. The last `previous-*` folder is kept for support.
+
+From a prompt, for support:
+
+```sh
+python -m launcher.update --home C:\FastAlgo check
+python -m launcher.update --home C:\FastAlgo install
+python -m launcher.update --home C:\FastAlgo apply FastAlgo-1.3.0.zip
+```
 
 ## Install on a client PC
 
@@ -48,6 +97,7 @@ continues where it stopped and reuses everything already downloaded.
 | `C:\FastAlgo\cache` | Download cache. Makes re-runs and repairs fast. Safe to delete. |
 | `C:\FastAlgo\run` | Keeper state: `status.json`, `keeper.log`, `server.json`, locks. |
 | `C:\FastAlgo\backups` | A zip from every reset (the last 5 are kept). |
+| `C:\FastAlgo\updates` | The previous version's program files and databases from the last update, and a download in progress. |
 | `C:\FastAlgo\panel.json` | Panel options (auto-restart, keep awake, start at sign-in). |
 | `C:\FastAlgo\install.log` | Every installer run, for support. |
 | `C:\FastAlgo\install.ok` | Written when the install finishes. Without it the panel offers **Finish installation**. |
