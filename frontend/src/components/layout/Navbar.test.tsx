@@ -47,17 +47,17 @@ describe('Navbar', () => {
 
   it('marks only the active sheet navigation link as current', async () => {
     const user = userEvent.setup()
-    renderNavbar('/trading')
+    renderNavbar('/python')
 
     await user.click(screen.getByRole('button', { name: 'Toggle menu' }))
 
     const sheet = await screen.findByRole('dialog', { name: 'Navigation Menu' })
-    const trading = within(sheet).getByRole('link', { name: 'Trading' })
+    const python = within(sheet).getByRole('link', { name: 'Python' })
     const platforms = within(sheet).getByRole('link', { name: 'Platforms' })
 
-    expect(trading).toHaveAttribute('aria-current', 'page')
+    expect(python).toHaveAttribute('aria-current', 'page')
     expect(platforms).not.toHaveAttribute('aria-current')
-    expect(currentLinks(sheet)).toEqual([trading])
+    expect(currentLinks(sheet)).toEqual([python])
   })
 
   it('marks the active quick-access sheet link as current', async () => {
@@ -68,10 +68,10 @@ describe('Navbar', () => {
 
     const sheet = await screen.findByRole('dialog', { name: 'Navigation Menu' })
     const profile = within(sheet).getByRole('link', { name: 'Profile' })
-    const trading = within(sheet).getByRole('link', { name: 'Trading' })
+    const python = within(sheet).getByRole('link', { name: 'Python' })
 
     expect(profile).toHaveAttribute('aria-current', 'page')
-    expect(trading).not.toHaveAttribute('aria-current')
+    expect(python).not.toHaveAttribute('aria-current')
     expect(currentLinks(sheet)).toEqual([profile])
   })
 })
