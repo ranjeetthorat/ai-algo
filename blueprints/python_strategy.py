@@ -6,6 +6,8 @@ Supports: Windows, Linux, macOS
 Note: Each strategy runs in a separate process for complete isolation
 """
 
+import ast
+import importlib.util
 import json
 import logging
 import os
@@ -102,6 +104,14 @@ def broadcast_status_update(strategy_id: str, status: str, message: str = None):
 # File paths - use Path for cross-platform compatibility
 STRATEGIES_DIR = Path("strategies") / "scripts"
 LOGS_DIR = Path("log") / "strategies"  # Using existing log folder
+# The strategy kit lives here and is put on each strategy's PYTHONPATH.
+STRATEGY_LIB_DIR = Path("strategies") / "lib"
+# Each strategy's own saved state (strategy_kit), one JSON file per strategy.
+STATE_DIR = Path("strategies") / "state"
+# Numeric libraries default to one thread per core; a trading script gains
+# nothing from that and pays for it in memory (measured: 209 MB committed
+# with defaults, 112 MB with one thread). setdefault, so .env still wins.
+STRATEGY_THREAD_ENV = ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")
 CONFIG_FILE = Path("strategies") / "strategy_configs.json"
 
 # Detect operating system
@@ -240,6 +250,7 @@ def ensure_directories():
     try:
         STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
         LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Directories initialized on {OS_TYPE}")
     except PermissionError as e:
         # If we can't create directories, check if they exist
@@ -524,6 +535,15 @@ def start_strategy_process(strategy_id):
                 config.get("exchange")
             )
             strategy_env.setdefault("OPENALGO_HOST", "http://127.0.0.1:5000")
+            strategy_env["OPENALGO_STRATEGY_STATE_DIR"] = str(STATE_DIR.absolute())
+            # Always set, so a value inherited from the server's environment can't leak in.
+            strategy_env["OPENALGO_STRATEGY_PARAMS"] = json.dumps(config.get("params") or {})
+            existing_path = strategy_env.get("PYTHONPATH")
+            strategy_env["PYTHONPATH"] = os.pathsep.join(
+                p for p in (str(STRATEGY_LIB_DIR.absolute()), existing_path) if p
+            )
+            for name in STRATEGY_THREAD_ENV:
+                strategy_env.setdefault(name, "1")
             try:
                 from database.auth_db import get_api_key_for_tradingview
                 user_id = config.get("user_id")
@@ -1010,76 +1030,167 @@ def close_log_handle_safely(strategy_info):
             strategy_info["log_handle"] = None
 
 
+# Exit codes agreed with strategies/lib/strategy_kit.py. A strategy that uses
+# the kit prints one "FATAL: <reason>" line before exiting with either.
+STRATEGY_EXIT_STOPPED = 3  # the strategy stopped itself with a reason
+STRATEGY_EXIT_CODE_ERROR = 4  # an exception in the strategy's own code
+LOG_TAIL_BYTES = 8192
+FATAL_PREFIX = "FATAL: "
+
+
+def read_exit_reason(log_file):
+    """Return (fatal_reason, last_line) from the tail of a run log; either may be None."""
+    if not log_file:
+        return None, None
+    try:
+        with open(log_file, "rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            handle.seek(max(0, handle.tell() - LOG_TAIL_BYTES))
+            tail = handle.read().decode("utf-8", errors="replace")
+    except OSError:
+        return None, None
+    lines = [line.strip() for line in tail.splitlines() if line.strip()]
+    fatal = None
+    for line in reversed(lines):
+        index = line.find(FATAL_PREFIX)
+        if index != -1:
+            fatal = line[index + len(FATAL_PREFIX):].strip()[:500]
+            break
+    return fatal, (lines[-1][:200] if lines else None)
+
+
+def describe_strategy_exit(returncode, log_file):
+    """The message for a strategy that ended on its own, or None for a clean finish.
+
+    returncode is None for a process re-adopted after a server restart, whose
+    exit code the host cannot collect.
+    """
+    if returncode == 0:
+        return None
+    fatal, last_line = read_exit_reason(log_file)
+    if fatal and returncode == STRATEGY_EXIT_CODE_ERROR:
+        return f"Strategy code failed: {fatal}"
+    if fatal:
+        return fatal
+    detail = f" Last log line: {last_line.rstrip('.')}." if last_line else ""
+    if returncode is None:
+        return f"Strategy stopped unexpectedly.{detail} See the latest log."
+    return f"Strategy stopped unexpectedly (exit code {returncode}).{detail} See the latest log."
+
+
+def _process_exit(info):
+    """Return (ended, returncode) for a tracked strategy process."""
+    process = info["process"]
+    if isinstance(process, subprocess.Popen):
+        returncode = process.poll()
+        return returncode is not None, returncode
+    if hasattr(process, "is_running"):
+        # Re-adopted after a server restart: alive or not, no exit code.
+        try:
+            return psutil_process_has_exited(process), None
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return True, None
+    try:
+        pid = info.get("pid")
+        return bool(pid and not psutil.pid_exists(pid)), None
+    except Exception:
+        return True, None
+
+
+def record_strategy_exit(config, returncode, error):
+    """Write a self-ended run's outcome into its config. Caller holds PROCESS_LOCK."""
+    config["is_running"] = False
+    config["pid"] = None
+    config["last_stopped"] = get_ist_time().isoformat()
+    config["last_exit_code"] = returncode
+    config.pop("restart_note", None)
+    if error:
+        config["is_error"] = True
+        config["error_message"] = error
+        config["error_time"] = get_ist_time().isoformat()
+    else:
+        config.pop("is_error", None)
+        config.pop("error_message", None)
+        config.pop("error_time", None)
+
+
+def acknowledge_strategy_stop(config):
+    """Clear the error, restart notice and pending restart of a strategy. True if anything changed.
+
+    Called when the user presses Start: that is the acknowledgement the
+    schedule waits for before it will start an errored strategy again.
+    """
+    changed = False
+    for key in ("is_error", "error_message", "error_time", "restart_note", "restore_pending"):
+        if key in config:
+            config.pop(key)
+            changed = True
+    return changed
+
+
 def cleanup_dead_processes():
-    """Clean up strategies with dead processes"""
-    with PROCESS_LOCK:  # Thread-safe operation
-        dead_strategies = []
+    """Reap strategies whose process ended on its own, and record why.
 
-        # Check RUNNING_STRATEGIES (in-memory)
+    Stops started by the host (Stop button, scheduled stop, enforcer, shutdown)
+    never reach this function: stop_strategy_process removes the entry from
+    RUNNING_STRATEGIES before it terminates the process.
+    """
+    ended = []
+    with PROCESS_LOCK:
         for strategy_id, info in list(RUNNING_STRATEGIES.items()):
-            process = info["process"]
-            is_dead = False
-
-            # Check if process has terminated based on its type
-            if isinstance(process, subprocess.Popen):
-                # For subprocess.Popen objects
-                if process.poll() is not None:
-                    is_dead = True
-            elif hasattr(process, "is_running"):
-                # For psutil.Process objects
-                try:
-                    if psutil_process_has_exited(process):
-                        is_dead = True
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    is_dead = True
-            else:
-                # Fallback: try to check if process exists by PID
-                try:
-                    pid = info.get("pid")
-                    if pid and not psutil.pid_exists(pid):
-                        is_dead = True
-                except Exception:
-                    is_dead = True
-
+            is_dead, returncode = _process_exit(info)
             if is_dead:
-                dead_strategies.append(strategy_id)
-                # Close log file handle safely
+                del RUNNING_STRATEGIES[strategy_id]
                 close_log_handle_safely(info)
+                ended.append((strategy_id, returncode, info.get("log_file")))
 
-        for strategy_id in dead_strategies:
-            del RUNNING_STRATEGIES[strategy_id]
-            if strategy_id in STRATEGY_CONFIGS:
-                STRATEGY_CONFIGS[strategy_id]["is_running"] = False
-                STRATEGY_CONFIGS[strategy_id]["pid"] = None
-
-        # Also check STRATEGY_CONFIGS for stale is_running flags
-        # (e.g., after app restart, RUNNING_STRATEGIES is empty but config has is_running=True)
+        # A config that says running with no tracked process: the server went
+        # down while the strategy ran (or it died while the server was down).
+        # Keep that fact as restore_pending, so the restore after the next
+        # broker login can still restart it; clearing it outright lost the
+        # restart whenever login came more than a minute after startup.
         configs_to_fix = []
         for strategy_id, config in STRATEGY_CONFIGS.items():
             if config.get("is_running") and strategy_id not in RUNNING_STRATEGIES:
-                # Config says running but not in memory - check if PID is alive
                 pid = config.get("pid")
-                if pid:
-                    if not psutil.pid_exists(pid):
-                        configs_to_fix.append(strategy_id)
-                        logger.info(
-                            f"Cleaning up stale is_running flag for {strategy_id} (PID {pid} not found)"
-                        )
-                else:
-                    # No PID stored, definitely not running
-                    configs_to_fix.append(strategy_id)
-                    logger.info(f"Cleaning up stale is_running flag for {strategy_id} (no PID)")
-
+                if pid and psutil.pid_exists(pid):
+                    continue
+                configs_to_fix.append(strategy_id)
+                logger.info(
+                    f"Strategy {strategy_id} was running when the server stopped "
+                    f"(PID {pid} not found); restart pending"
+                )
         for strategy_id in configs_to_fix:
-            STRATEGY_CONFIGS[strategy_id]["is_running"] = False
-            STRATEGY_CONFIGS[strategy_id]["pid"] = None
-
+            config = STRATEGY_CONFIGS[strategy_id]
+            config["is_running"] = False
+            config["pid"] = None
+            config["restore_pending"] = True
         if configs_to_fix:
             save_configs()
 
-        if dead_strategies:
-            save_configs()
-            logger.info(f"Cleaned up {len(dead_strategies)} dead processes")
+    if not ended:
+        return
+
+    # Reading the logs is file I/O, so it happens outside the lock.
+    outcomes = [(sid, rc, describe_strategy_exit(rc, log)) for sid, rc, log in ended]
+
+    broadcasts = []
+    with PROCESS_LOCK:
+        for strategy_id, returncode, error in outcomes:
+            config = STRATEGY_CONFIGS.get(strategy_id)
+            # A new run may have started between the two holds; it owns the config now.
+            if config is None or strategy_id in RUNNING_STRATEGIES:
+                continue
+            record_strategy_exit(config, returncode, error)
+            if error:
+                broadcasts.append((strategy_id, "error", error))
+                logger.warning(f"Strategy {strategy_id} stopped (exit code {returncode}): {error}")
+            else:
+                broadcasts.append((strategy_id, *get_schedule_status(config)))
+                logger.info(f"Strategy {strategy_id} finished (exit code {returncode})")
+        save_configs()
+    for strategy_id, status, message in broadcasts:
+        broadcast_status_update(strategy_id, status, message)
 
 
 DEFAULT_STRATEGY_EXCHANGE = "NSE"
@@ -1274,6 +1385,15 @@ def scheduled_start_strategy(strategy_id: str):
     if config.get("manually_stopped"):
         logger.info(
             f"Strategy {strategy_id} manually stopped - skipping scheduled auto-start"
+        )
+        return
+
+    # A run that stopped with a reason waits for the user to read it and press
+    # Start; the schedule does not start it again behind their back.
+    if config.get("is_error"):
+        logger.info(
+            f"Strategy {strategy_id} stopped with an error - skipping scheduled auto-start "
+            f"until it is started by hand"
         )
         return
 
@@ -1496,6 +1616,7 @@ def market_hours_enforcer():
                     if (
                         not is_running
                         and not config.get("manually_stopped")
+                        and not config.get("is_error")
                         and (not schedule_days or today_day in schedule_days)
                         and is_within_schedule_time(strategy_id)
                     ):
@@ -1931,6 +2052,12 @@ def start_strategy(strategy_id):
             days=config.get("schedule_days"),
         )
 
+    # Pressing Start is the acknowledgement of a run that stopped with a reason
+    # or was interrupted by the server stopping.
+    if acknowledge_strategy_stop(config):
+        save_configs()
+        logger.info(f"Start acknowledged the last stop of strategy {strategy_id}")
+
     # Clear manual stop flag since user is explicitly starting
     # This resumes scheduled auto-start
     if strategy_id in STRATEGY_CONFIGS and STRATEGY_CONFIGS[strategy_id].get("manually_stopped"):
@@ -2020,6 +2147,12 @@ def stop_strategy(strategy_id):
     config = STRATEGY_CONFIGS.get(strategy_id, {})
     is_running = config.get("is_running", False)
 
+    # A deliberate Stop also cancels a pending restart and its notice.
+    had_pending = config.pop("restore_pending", None)
+    had_note = config.pop("restart_note", None)
+    if had_pending or had_note:
+        save_configs()
+
     if is_running:
         # Strategy is actually running - stop the process
         success, message = stop_strategy_process(strategy_id)
@@ -2103,6 +2236,142 @@ def unschedule_strategy_route(strategy_id):
     ), 400
 
 
+# ---------------------------------------------------------------------------
+# Strategy settings (PARAMS) and saved state
+# ---------------------------------------------------------------------------
+
+_strategy_kit_module = None
+
+
+def strategy_kit():
+    """The strategy kit module, loaded from strategies/lib.
+
+    The host checks settings with the same functions a running strategy uses,
+    so the settings form and the strategy can never disagree about what is
+    valid. The kit imports only the standard library at module level; it is
+    loaded under its own name so it never shadows anything on sys.path.
+    """
+    global _strategy_kit_module
+    if _strategy_kit_module is None:
+        spec = importlib.util.spec_from_file_location(
+            "fastalgo_strategy_kit", STRATEGY_LIB_DIR / "strategy_kit.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _strategy_kit_module = module
+    return _strategy_kit_module
+
+
+def extract_params_schema(source):
+    """Read a strategy's PARAMS declaration without running the strategy.
+
+    Returns (schema, error). schema is None when the file declares no PARAMS
+    or the declaration is invalid; error explains an invalid one in words a
+    strategy author can act on.
+    """
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        return None, f"The strategy file has a syntax error on line {e.lineno}, so its settings cannot be read."
+    value_node = None
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            targets = [node.target]
+        else:
+            continue
+        if any(isinstance(t, ast.Name) and t.id == "PARAMS" for t in targets):
+            value_node = node.value  # the last assignment wins, as when Python runs it
+    if value_node is None:
+        return None, None
+    try:
+        schema = ast.literal_eval(value_node)
+    except (ValueError, TypeError, SyntaxError):
+        return None, "PARAMS must be a plain dictionary of fixed values (no variables or function calls)."
+    problems = strategy_kit().check_params_schema(schema)
+    if problems:
+        return None, "; ".join(problems)
+    return schema, None
+
+
+def _strategy_source(config):
+    """The strategy file's text, or None if it cannot be read."""
+    raw = config.get("file_path")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    try:
+        return Path(raw).read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def _state_file(strategy_id):
+    return STATE_DIR / f"{strategy_id}.json"
+
+
+def describe_saved_state(strategy_id):
+    """A short summary of a strategy's saved state for the settings dialog, or None."""
+    path = _state_file(strategy_id)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"date": None, "open_positions": None, "damaged": True}
+    kit = data.get("_kit") if isinstance(data, dict) else None
+    kit = kit if isinstance(kit, dict) else {}
+    try:
+        net = strategy_kit().net_positions(kit.get("fills") or [])
+        open_positions = sum(1 for qty in net.values() if qty)
+    except (KeyError, TypeError):
+        open_positions = None
+    return {
+        "date": kit.get("date"),
+        "open_positions": open_positions,
+        "pending_orders": len(kit.get("pending") or {}),
+        "damaged": False,
+    }
+
+
+def archive_saved_state(strategy_id, label="cleared"):
+    """Move a strategy's saved state aside so its next start is fresh. True if a file was moved."""
+    path = _state_file(strategy_id)
+    if not path.is_file():
+        return False
+    target = path.with_name(
+        f"{strategy_id}.{label}-{get_ist_time().strftime('%Y%m%d-%H%M%S')}.json"
+    )
+    os.replace(path, target)
+    logger.info(f"Archived saved state of strategy {strategy_id} to {target.name}")
+    return True
+
+
+def strategy_settings_payload(strategy_id, config):
+    """What the settings dialog needs: fields in declaration order, current values, problems."""
+    source = _strategy_source(config)
+    if source is None:
+        schema, error = None, "The strategy file could not be read."
+    else:
+        schema, error = extract_params_schema(source)
+    saved = config.get("params") or {}
+    fields, problems = [], []
+    for name, spec in (schema or {}).items():
+        value = saved.get(name, spec.get("default"))
+        _, problem = strategy_kit().coerce_param(name, spec, value)
+        if problem:
+            problems.append(f"Saved value no longer valid: {problem}")
+            value = spec.get("default")
+        fields.append({"name": name, **spec, "value": value})
+    return {
+        "fields": fields,
+        "error": error,
+        "problems": problems,
+        "is_running": bool(config.get("is_running")),
+        "saved_state": describe_saved_state(strategy_id),
+    }
+
+
 def _delete_strategy_file(strategy_id: str, config: dict) -> None:
     """Delete a strategy's script, only if it is a file inside STRATEGIES_DIR.
 
@@ -2182,6 +2451,11 @@ def delete_strategy(strategy_id):
         # Delete file
         if strategy_id in STRATEGY_CONFIGS:
             _delete_strategy_file(strategy_id, STRATEGY_CONFIGS[strategy_id])
+            # Kept, not deleted: it records what the strategy last held.
+            try:
+                archive_saved_state(strategy_id, label="deleted")
+            except OSError:
+                logger.exception(f"Could not archive saved state of deleted strategy {strategy_id}")
 
             # Remove from configs
             del STRATEGY_CONFIGS[strategy_id]
@@ -2543,7 +2817,7 @@ def api_get_strategies():
         # Determine status with detailed schedule info
         if config.get("is_running"):
             status = "running"
-            status_message = "Running"
+            status_message = config.get("restart_note") or "Running"
         elif config.get("error_message"):
             status = "error"
             status_message = config.get("error_message")
@@ -2567,6 +2841,8 @@ def api_get_strategies():
                 "last_started": config.get("last_started"),
                 "last_stopped": config.get("last_stopped"),
                 "error_message": config.get("error_message"),
+                "notice": config.get("restart_note") if config.get("is_running") else None,
+                "last_exit_code": config.get("last_exit_code"),
                 "paused_reason": config.get("paused_reason"),
                 "paused_message": config.get("paused_message"),
                 "process_id": config.get("process_id"),
@@ -2662,6 +2938,8 @@ def api_get_strategy(strategy_id):
                 "last_started": config.get("last_started"),
                 "last_stopped": config.get("last_stopped"),
                 "error_message": config.get("error_message"),
+                "notice": config.get("restart_note") if config.get("is_running") else None,
+                "last_exit_code": config.get("last_exit_code"),
                 "paused_reason": config.get("paused_reason"),
                 "paused_message": config.get("paused_message"),
                 "process_id": config.get("process_id"),
@@ -2711,6 +2989,90 @@ def api_get_strategy_content(strategy_id):
     except Exception as e:
         logger.exception(f"Error reading strategy file: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@python_strategy_bp.route("/api/strategy/<strategy_id>/params", methods=["GET"])
+@check_session_validity
+def api_get_strategy_params(strategy_id):
+    """API: the strategy's declared settings, their current values, and its saved state."""
+    user_id = session.get("user")
+    if not user_id:
+        return jsonify({"status": "error", "message": "Session expired"}), 401
+    is_owner, result = verify_strategy_ownership(strategy_id, user_id, return_config=True)
+    if not is_owner:
+        return result
+    return jsonify({"status": "success", "data": strategy_settings_payload(strategy_id, result)})
+
+
+@python_strategy_bp.route("/api/strategy/<strategy_id>/params", methods=["POST"])
+@check_session_validity
+def api_save_strategy_params(strategy_id):
+    """API: save the strategy's settings. They apply the next time it starts."""
+    user_id = session.get("user")
+    if not user_id:
+        return jsonify({"status": "error", "message": "Session expired"}), 401
+    is_owner, result = verify_strategy_ownership(strategy_id, user_id, return_config=True)
+    if not is_owner:
+        return result
+    config = result
+
+    data = request.get_json(silent=True) or {}
+    values = data.get("values")
+    if not isinstance(values, dict):
+        return jsonify({"status": "error", "message": "No settings were sent."}), 400
+
+    source = _strategy_source(config)
+    if source is None:
+        return jsonify({"status": "error", "message": "The strategy file could not be read."}), 400
+    schema, error = extract_params_schema(source)
+    if error:
+        return jsonify({"status": "error", "message": error}), 400
+    if not schema:
+        return jsonify(
+            {"status": "error", "message": "This strategy declares no settings."}
+        ), 400
+
+    params, errors = strategy_kit().validate_params(schema, values)
+    if errors:
+        return jsonify({"status": "error", "message": "; ".join(errors)}), 400
+
+    with PROCESS_LOCK:
+        config["params"] = params
+        save_configs()
+    logger.info(f"Saved settings for strategy {strategy_id}")
+    message = "Settings saved."
+    if config.get("is_running"):
+        message += " They apply the next time the strategy starts."
+    return jsonify({"status": "success", "message": message, "data": {"values": params}})
+
+
+@python_strategy_bp.route("/api/strategy/<strategy_id>/state/clear", methods=["POST"])
+@check_session_validity
+def api_clear_strategy_state(strategy_id):
+    """API: move the strategy's saved state aside, so its next start is a fresh start."""
+    user_id = session.get("user")
+    if not user_id:
+        return jsonify({"status": "error", "message": "Session expired"}), 401
+    is_owner, result = verify_strategy_ownership(strategy_id, user_id, return_config=True)
+    if not is_owner:
+        return result
+    if result.get("is_running"):
+        return jsonify(
+            {"status": "error", "message": "Stop the strategy before clearing its saved state."}
+        ), 400
+    try:
+        moved = archive_saved_state(strategy_id)
+    except OSError:
+        logger.exception(f"Could not archive saved state of strategy {strategy_id}")
+        return jsonify(
+            {"status": "error", "message": "The saved state file could not be moved. Check the log."}
+        ), 500
+    message = (
+        "Saved state cleared. The next start will be a fresh start."
+        if moved
+        else "There was no saved state to clear."
+    )
+    return jsonify({"status": "success", "message": message})
 
 
 @python_strategy_bp.route("/api/logs/<strategy_id>")
@@ -3036,8 +3398,74 @@ def restore_running_strategy_process(strategy_id, config):
     return False
 
 
+def _needs_restore(config):
+    """True for a strategy that was running when the server stopped."""
+    return bool((config.get("is_running") and config.get("pid")) or config.get("restore_pending"))
+
+
+def _inside_user_schedule(config):
+    """True when now is a scheduled trading day and inside the strategy's own start-stop window.
+
+    Uses the user's window, not the exchange session, so a strategy scheduled
+    from 09:00 can be restarted at 09:05 before the 09:15 open, as the
+    scheduled start would have done.
+    """
+    now = datetime.now(IST)
+    day_names = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    schedule_days = [d.lower() for d in config.get("schedule_days", [])]
+    if schedule_days and day_names[now.weekday()] not in schedule_days:
+        return False
+    if not is_trading_day(exchange=normalize_exchange(config.get("exchange"))):
+        return False
+    start, stop = config.get("schedule_start"), config.get("schedule_stop")
+    current = now.strftime("%H:%M")
+    if start and current < start:
+        return False
+    if stop and current > stop:
+        return False
+    return True
+
+
+def _restart_after_server_stop(strategy_id, config):
+    """Restart a strategy interrupted by the server stopping. Returns True on success.
+
+    Outside its schedule window the strategy is left for its next scheduled
+    start instead: a login at 20:00 must not start a strategy for the night.
+    """
+    if not _inside_user_schedule(config):
+        config["is_running"] = False
+        config["pid"] = None
+        config.pop("restore_pending", None)
+        logger.info(
+            f"Strategy {strategy_id} was running when the server stopped; outside its schedule "
+            f"now, so it will start at its next scheduled time"
+        )
+        return False
+
+    logger.info(f"Attempting to restart strategy {strategy_id}...")
+    try:
+        success, message = start_strategy_process(strategy_id)
+    except Exception as e:
+        logger.exception(f"Exception restarting strategy {strategy_id}: {e}")
+        success, message = False, str(e)
+    config.pop("restore_pending", None)
+    if success:
+        config["restart_note"] = (
+            f"Restarted after the server stopped ({get_ist_time().strftime('%H:%M')} IST)"
+        )
+        logger.info(f"Successfully restarted strategy {strategy_id}")
+        return True
+    config["is_running"] = False
+    config["is_error"] = True
+    config["error_message"] = f"Could not restart after the server stopped: {message}"
+    config["error_time"] = get_ist_time().isoformat()
+    config["pid"] = None
+    logger.error(f"Failed to restart strategy {strategy_id}: {message}")
+    return False
+
+
 def restore_strategy_states():
-    """Restore strategy states on startup - restart running strategies or mark as error"""
+    """Restore strategy states on startup: adopt live processes, restart interrupted ones."""
     logger.debug("Restoring strategy states from previous session...")
 
     # During startup, we need to be more lenient with master contract checks
@@ -3053,9 +3481,12 @@ def restore_strategy_states():
             and config.get("pid")
             and restore_running_strategy_process(strategy_id, config)
         ):
+            config.pop("restore_pending", None)
             restored_count += 1
 
-    # If we can't determine the broker (no active auth), delay strategy restoration
+    # If we can't determine the broker (no active auth), delay strategy restoration.
+    # Interrupted strategies keep is_running or restore_pending, so the restore
+    # after login still finds them.
     if "No broker" in contract_message:
         logger.debug("No active broker found during startup - delaying strategy restoration")
         if restored_count:
@@ -3066,59 +3497,32 @@ def restore_strategy_states():
         logger.warning(
             f"Master contracts not ready - strategies will remain in error state until contracts are downloaded: {contract_message}"
         )
-        # Mark all running strategies as error state due to master contract dependency
-        for config in STRATEGY_CONFIGS.values():
-            if config.get("is_running"):
-                if config.get("pid") and check_process_status(config.get("pid")):
-                    # A live strategy is already running. Keep its state intact
-                    # so a later master-contract refresh cannot start a duplicate.
-                    continue
-                config["is_running"] = False
-                config["is_error"] = True
-                config["error_message"] = "Waiting for master contracts to be downloaded"
-                config["error_time"] = get_ist_time().isoformat()
-                config["pid"] = None
+        for strategy_id, config in STRATEGY_CONFIGS.items():
+            if strategy_id in RUNNING_STRATEGIES or not _needs_restore(config):
+                continue
+            if config.get("pid") and check_process_status(config.get("pid")):
+                # A live strategy is already running. Keep its state intact
+                # so a later master-contract refresh cannot start a duplicate.
+                continue
+            config["is_running"] = False
+            config["is_error"] = True
+            config["error_message"] = "Waiting for master contracts to be downloaded"
+            config["error_time"] = get_ist_time().isoformat()
+            config["pid"] = None
+            config["restore_pending"] = True
         save_configs()
         return
 
     for strategy_id, config in STRATEGY_CONFIGS.items():
-        if config.get("is_running") and config.get("pid"):
-            strategy_restored = strategy_id in RUNNING_STRATEGIES
+        if strategy_id in RUNNING_STRATEGIES or not _needs_restore(config):
+            continue
+        if _restart_after_server_stop(strategy_id, config):
+            restored_count += 1
+        elif config.get("is_error"):
+            error_count += 1
 
-            # If strategy wasn't restored, try to restart it automatically
-            if not strategy_restored:
-                logger.info(f"Attempting to restart strategy {strategy_id}...")
-                try:
-                    success, message = start_strategy_process(strategy_id)
-                    if success:
-                        logger.info(f"Successfully restarted strategy {strategy_id}")
-                        restored_count += 1
-                    else:
-                        # Mark as error state
-                        config["is_running"] = False
-                        config["is_error"] = True
-                        config["error_message"] = f"Failed to restart: {message}"
-                        config["error_time"] = get_ist_time().isoformat()
-                        config["pid"] = None
-                        logger.error(f"Failed to restart strategy {strategy_id}: {message}")
-                        error_count += 1
-                except Exception as e:
-                    # Mark as error state
-                    config["is_running"] = False
-                    config["is_error"] = True
-                    config["error_message"] = f"Restart exception: {str(e)}"
-                    config["error_time"] = get_ist_time().isoformat()
-                    config["pid"] = None
-                    logger.exception(f"Exception restarting strategy {strategy_id}: {e}")
-                    error_count += 1
-
-        # Clear error state for strategies that are not marked as running
-        elif config.get("is_error") and not config.get("is_running"):
-            # Keep error state until user manually clears it
-            pass
-
+    save_configs()
     if restored_count > 0 or error_count > 0:
-        save_configs()
         logger.info(
             f"State restoration complete: {restored_count} restored, {error_count} in error state"
         )
@@ -3153,6 +3557,14 @@ def check_and_start_pending_strategies():
             config.pop("is_error", None)
             config.pop("error_message", None)
             config.pop("error_time", None)
+
+            # Interrupted by a server stop: restart under the same schedule rule.
+            if config.get("restore_pending"):
+                if _restart_after_server_stop(strategy_id, config):
+                    started_count += 1
+                elif config.get("is_error"):
+                    failed_count += 1
+                continue
 
             success, message = start_strategy_process(strategy_id)
             if success:

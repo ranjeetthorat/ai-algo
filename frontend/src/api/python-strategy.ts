@@ -7,6 +7,8 @@ import type {
   PythonStrategyContent,
   ScheduleConfig,
   StrategyExchange,
+  StrategyParamValue,
+  StrategySettings,
 } from '@/types/python-strategy'
 import type { ApiResponse } from '@/types/trading'
 import { webClient } from './client'
@@ -137,6 +139,40 @@ export const pythonStrategyApi = {
   /**
    * Clear error state
    */
+  /**
+   * Get a strategy's declared settings, their current values, and its saved state
+   */
+  getSettings: async (strategyId: string): Promise<StrategySettings> => {
+    const response = await webClient.get<{ status: string; data: StrategySettings }>(
+      `/python/api/strategy/${strategyId}/params`
+    )
+    return response.data.data
+  },
+
+  /**
+   * Save a strategy's settings. They apply the next time it starts.
+   */
+  saveSettings: async (
+    strategyId: string,
+    values: Record<string, StrategyParamValue>
+  ): Promise<ApiResponse<void>> => {
+    const response = await webClient.post<ApiResponse<void>>(
+      `/python/api/strategy/${strategyId}/params`,
+      { values }
+    )
+    return response.data
+  },
+
+  /**
+   * Move a strategy's saved state aside so its next start is a fresh start
+   */
+  clearSavedState: async (strategyId: string): Promise<ApiResponse<void>> => {
+    const response = await webClient.post<ApiResponse<void>>(
+      `/python/api/strategy/${strategyId}/state/clear`
+    )
+    return response.data
+  },
+
   clearError: async (strategyId: string): Promise<ApiResponse<void>> => {
     const response = await webClient.post<ApiResponse<void>>(`/python/clear-error/${strategyId}`)
     return response.data

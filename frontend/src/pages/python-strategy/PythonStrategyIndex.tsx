@@ -11,12 +11,14 @@ import {
   Play,
   Plus,
   RefreshCw,
+  Settings,
   Square,
   Trash2,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { pythonStrategyApi } from '@/api/python-strategy'
+import { PythonStrategySettingsDialog } from '@/components/python-strategy/PythonStrategySettingsDialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -50,6 +52,7 @@ export default function PythonStrategyIndex() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [strategyToDelete, setStrategyToDelete] = useState<PythonStrategy | null>(null)
+  const [settingsStrategy, setSettingsStrategy] = useState<PythonStrategy | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
 
   const fetchData = async (silent = false) => {
@@ -245,9 +248,9 @@ export default function PythonStrategyIndex() {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -284,42 +287,42 @@ export default function PythonStrategyIndex() {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-4">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <Card className="py-3 gap-0">
+          <CardContent className="px-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xl font-bold">{stats.total}</p>
               </div>
-              <FileCode className="h-8 w-8 text-muted-foreground" />
+              <FileCode className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4">
+        <Card className="py-3 gap-0">
+          <CardContent className="px-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Running</p>
-                <p className="text-2xl font-bold text-green-500">{stats.running}</p>
+                <p className="text-xl font-bold text-green-500">{stats.running}</p>
               </div>
-              <Play className="h-8 w-8 text-green-500" />
+              <Play className="h-5 w-5 text-green-500" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4">
+        <Card className="py-3 gap-0">
+          <CardContent className="px-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Scheduled</p>
-                <p className="text-2xl font-bold text-blue-500">{stats.scheduled}</p>
+                <p className="text-xl font-bold text-blue-500">{stats.scheduled}</p>
               </div>
-              <Calendar className="h-8 w-8 text-blue-500" />
+              <Calendar className="h-5 w-5 text-blue-500" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4">
+        <Card className="py-3 gap-0">
+          <CardContent className="px-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Master Contract</p>
@@ -343,8 +346,8 @@ export default function PythonStrategyIndex() {
       </div>
 
       {/* Current Time */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Clock className="h-4 w-4" />
+      <div className="flex items-center gap-2 text-base font-medium text-foreground tabular-nums">
+        <Clock className="h-5 w-5 text-muted-foreground" />
         Current IST: {currentTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
       </div>
 
@@ -381,6 +384,19 @@ export default function PythonStrategyIndex() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Strategy settings"
+                          onClick={() => setSettingsStrategy(strategy)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Settings and saved state</TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                       <TooltipTrigger>
                         <Badge
@@ -448,12 +464,24 @@ export default function PythonStrategyIndex() {
                   </p>
                 </div>
 
+                {/* Restart notice: the host restarted this strategy after the server stopped */}
+                {strategy.status === 'running' && strategy.notice && (
+                  <div className="flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>{strategy.notice}</span>
+                  </div>
+                )}
+
                 {/* Error Message */}
                 {strategy.status === 'error' && strategy.error_message && (
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription className="text-xs">
+                      <span className="font-semibold">Stopped: </span>
                       {strategy.error_message}
+                      <span className="block mt-1 text-muted-foreground">
+                        It will not start on its schedule until you press Start.
+                      </span>
                       <Button
                         variant="link"
                         size="sm"
@@ -588,6 +616,14 @@ export default function PythonStrategyIndex() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PythonStrategySettingsDialog
+        strategy={settingsStrategy}
+        open={settingsStrategy !== null}
+        onOpenChange={(open) => {
+          if (!open) setSettingsStrategy(null)
+        }}
+      />
     </div>
   )
 }

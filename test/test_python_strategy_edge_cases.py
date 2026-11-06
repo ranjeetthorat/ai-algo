@@ -507,6 +507,48 @@ def test_subprocess_env_includes_strategy_exchange(ps_module, monkeypatch, tmp_p
     assert captured_env.get("STRATEGY_NAME") == "EnvTest"
 
 
+def test_subprocess_env_carries_strategy_kit_settings(ps_module, monkeypatch, tmp_path):
+    """The kit is importable, has a state folder, and .env values are not overridden."""
+    from pathlib import Path
+
+    strat = tmp_path / "noop.py"
+    strat.write_text("import sys; sys.exit(0)\n")
+    ps_module.STRATEGY_CONFIGS["kitenv"] = {
+        "name": "KitEnv",
+        "file_path": str(strat),
+        "user_id": "bob",
+        "exchange": "NFO",
+    }
+    captured_env = {}
+
+    class FakeProc:
+        def __init__(self, *a, **kw):
+            captured_env.update(kw.get("env") or {})
+            self.pid = 12346
+
+        def poll(self):
+            return None
+
+    monkeypatch.setattr(ps_module.subprocess, "Popen", FakeProc)
+    monkeypatch.setattr(ps_module, "check_master_contract_ready", lambda: (True, "ok"))
+    monkeypatch.setattr(ps_module, "broadcast_status_update", lambda *a, **kw: None)
+    monkeypatch.setattr(ps_module, "save_configs", lambda: None)
+    monkeypatch.setattr(ps_module, "LOGS_DIR", Path(tmp_path))
+    monkeypatch.setenv("PYTHONPATH", "already-there")
+    monkeypatch.setenv("OPENBLAS_NUM_THREADS", "4")
+    monkeypatch.delenv("OMP_NUM_THREADS", raising=False)
+
+    success, msg = ps_module.start_strategy_process("kitenv")
+    assert success, msg
+
+    lib = str(ps_module.STRATEGY_LIB_DIR.absolute())
+    assert captured_env["PYTHONPATH"].split(os.pathsep) == [lib, "already-there"]
+    assert (Path(lib) / "strategy_kit.py").exists()
+    assert captured_env["OPENALGO_STRATEGY_STATE_DIR"] == str(ps_module.STATE_DIR.absolute())
+    assert captured_env["OPENBLAS_NUM_THREADS"] == "4"
+    assert captured_env["OMP_NUM_THREADS"] == "1"
+
+
 # ---------------------------------------------------------------------------
 # Edge case 11: restored psutil processes under eventlet
 # ---------------------------------------------------------------------------
