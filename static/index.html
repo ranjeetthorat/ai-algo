@@ -145,6 +145,9 @@
     .lead { font-size: 1.125rem; font-weight: 600; color: var(--primary); margin-bottom: 24px; }
     .intro { font-size: 1rem; max-width: 42rem; margin: 0 auto 40px; }
     .ctas { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+    .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; margin: 0 0 24px; padding: 0; list-style: none; font-size: 0.875rem; color: var(--muted-foreground); }
+    .stats strong { font-size: 1.5rem; font-weight: 700; color: var(--foreground); margin-right: 4px; }
+    .download-note { margin-top: 16px; font-size: 0.875rem; }
 
     /* Sections */
     section.block { padding: 64px 0; }
@@ -257,9 +260,9 @@
     <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
     <symbol id="i-wand-2" viewBox="0 0 24 24"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></symbol>
     <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
-    <symbol id="i-life-buoy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></symbol>
     <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></symbol>
-    <symbol id="i-mail" viewBox="0 0 24 24"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
   </svg>
@@ -273,8 +276,9 @@
       <div class="nav-right">
         <div class="nav-links">
           <a class="btn btn-ghost" href="#desks">Features</a>
+          <a class="btn btn-ghost" href="#brokers">Brokers</a>
           <a class="btn btn-ghost" href="#ai">AI</a>
-          <a class="btn btn-ghost" href="https://www.tinycompute.site" target="_blank" rel="noopener noreferrer">Get support</a>
+          <a class="btn btn-ghost" data-site-link="downloadUrl" hidden>Download</a>
         </div>
         <button type="button" class="btn btn-ghost btn-icon theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
           <svg class="icon i-moon" aria-hidden="true"><use href="#i-moon"/></svg>
@@ -297,31 +301,33 @@
           <span class="accent">Take fast trades.</span>
         </h1>
         <p class="lead">Algorithmic trading for Indian markets, set up and supported for you</p>
+        <ul class="stats" aria-label="At a glance">
+          <li><strong>30+</strong> brokers</li>
+          <li><strong>15+</strong> platform plugins</li>
+          <li><strong>18</strong> options and portfolio tools</li>
+        </ul>
         <p class="intro muted">
           Test and run your trading ideas, connect the charting platforms you already use, build
           strategies with AI help, and use the built-in options and portfolio tools - option
           chains and Greeks, portfolio and SIP backtesting - with 30+ brokers.
         </p>
         <div class="ctas">
-          <a class="btn btn-primary btn-lg" href="https://www.tinycompute.site" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" aria-hidden="true"><use href="#i-life-buoy"/></svg>
-            Get support
+          <a class="btn btn-primary btn-lg" data-site-link="downloadUrl" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+            Download now
           </a>
           <a class="btn btn-outline btn-lg" data-site-link="telegramUrl" hidden target="_blank" rel="noopener noreferrer">
             <svg class="icon" aria-hidden="true"><use href="#i-send"/></svg>
             Message on Telegram
           </a>
-          <a class="btn btn-outline btn-lg" href="mailto:rthorat99@gmail.com">
-            <svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>
-            Email us
-          </a>
         </div>
+        <p class="download-note muted" data-site-text="downloadNote" hidden></p>
       </div>
     </section>
 
     <section class="block" aria-labelledby="integrations-title">
       <div class="container">
-        <h2 id="integrations-title" class="kicker brand center">Integrates With</h2>
+        <h2 id="integrations-title" class="kicker brand center">Plugs into the platforms you already use</h2>
         <ul class="chips">
           <li>Amibroker</li>
           <li>TradingView</li>
@@ -338,6 +344,62 @@
           <li>Excel</li>
           <li>Google Sheets</li>
           <li>Telegram</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block" id="brokers" aria-labelledby="brokers-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="pill pill-brand">
+            <svg class="icon" aria-hidden="true"><use href="#i-plug"/></svg>
+            30+ brokers
+          </span>
+          <h2 id="brokers-title">
+            Works with 30+ Indian brokers.
+            <span>Every broker is a plugin.</span>
+          </h2>
+          <p class="muted">
+            One API in front of every broker, so your strategies, alerts and scripts stay the
+            same when you switch. Changing broker is a reset from the control panel, with your
+            data backed up first.
+          </p>
+        </div>
+        <ul class="chips">
+          <li>Zerodha</li>
+          <li>Upstox</li>
+          <li>Angel One</li>
+          <li>Dhan</li>
+          <li>Fyers</li>
+          <li>Groww</li>
+          <li>Kotak Neo</li>
+          <li>5paisa</li>
+          <li>IIFL</li>
+          <li>IIFL Capital</li>
+          <li>Motilal Oswal</li>
+          <li>HDFC Securities</li>
+          <li>HDFC Sky</li>
+          <li>Paytm Money</li>
+          <li>INDmoney</li>
+          <li>m.Stock</li>
+          <li>Alice Blue</li>
+          <li>Shoonya by Finvasia</li>
+          <li>Flattrade</li>
+          <li>Firstock</li>
+          <li>Zebu</li>
+          <li>Samco</li>
+          <li>Definedge</li>
+          <li>Tradejini</li>
+          <li>TradeSmart</li>
+          <li>Pocketful</li>
+          <li>Nubra</li>
+          <li>Arrow</li>
+          <li>CompositEdge</li>
+          <li>Indiabulls</li>
+          <li>Jainam</li>
+          <li>RMoney</li>
+          <li>Wisdom Capital</li>
+          <li>Delta Exchange</li>
         </ul>
       </div>
     </section>
@@ -456,7 +518,7 @@
         <span>Based on OpenAlgo, licensed under AGPL-3.0 (<a href="https://github.com/ranjeetthorat/ai-algo" target="_blank" rel="noopener noreferrer">source code</a>)</span>
       </div>
       <div class="foot-contact">
-        Contact: <a href="mailto:rthorat99@gmail.com">rthorat99@gmail.com</a><span data-site-link-wrap="telegramUrl" hidden> · <a data-site-link="telegramUrl" target="_blank" rel="noopener noreferrer">Telegram</a></span>
+        <span data-site-link-wrap="telegramUrl" hidden>Contact: <a data-site-link="telegramUrl" target="_blank" rel="noopener noreferrer">Telegram</a></span>
       </div>
     </div>
   </footer>
@@ -471,6 +533,13 @@
         if (typeof url === 'string' && /^https:\/\//.test(url)) {
           link.href = url
           link.hidden = false
+        }
+      })
+      document.querySelectorAll('[data-site-text]').forEach(function (el) {
+        var text = config[el.getAttribute('data-site-text')]
+        if (typeof text === 'string' && text) {
+          el.textContent = text
+          el.hidden = false
         }
       })
       document.querySelectorAll('[data-site-link-wrap]').forEach(function (wrap) {
