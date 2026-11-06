@@ -370,10 +370,27 @@ on the network. These are the first things to check on a real client install.
 
 ## 8. Later
 
-- **M3.6 Update in place:** unpack a new release over `app\`, keeping every path
-  in the state manifest and `.venv`, then run `uv sync --frozen` (fast, since
-  only changed packages download) and the database migrations
-  (`upgrade/migrate_all.py`). Same manifest as the reset.
+- **M3.6 Update in place: done 2026-11-06** (`launcher/update.py`, the panel's
+  **Update now**, **Check for updates** and **Update from file**, and
+  `latest.json` from `scripts/build_release.py`). Decisions taken while building
+  it:
+  - **Announced, not pushed.** `latest.json` on the public site names the newest
+    release; panels check it when they open and every 6 hours, and the client
+    chooses when to update. Nothing updates on its own during market hours.
+  - **Program files are moved aside, not overwritten**, into
+    `updates\previous-<version>-<time>`, with the same all-or-nothing rename the
+    reset uses. The installed `RELEASE_FILES` decides what is program, so a file
+    a release drops is removed, and a client's file where a release now ships
+    one is kept in that folder.
+  - **The SQLite databases are copied before the migrations** and put back if
+    `uv sync` or a migration fails, together with the previous program. DuckDB
+    history is not copied (it can be large, and no migration touches it).
+  - **The panel restarts itself** on the new files (`--wait-lock`), since it
+    cannot reload its own code.
+  - Measured on the real 1.2.0 release (3,016 files) with `uv sync` and the
+    migrations stubbed: 26 s on this PC, almost all of it unpacking and moving
+    files. Tests: `test/test_launcher_update.py`, and the update cases in
+    `test/test_launcher_panel.py`.
 - **Restore from backup:** unzip a `before-reset` archive back. Cheap once M3.2
   exists.
 - **Linux:** `launcher.keeper` and `launcher.eject` are plain Python CLIs with
