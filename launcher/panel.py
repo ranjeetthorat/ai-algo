@@ -21,15 +21,16 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 import tkinter as tk
 import webbrowser
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from launcher import control, eject, envfile, state
+from launcher import control, eject, envfile, state, update
 from launcher.branding import display_name
 from launcher.keeper import (
     IS_WINDOWS,
@@ -46,6 +47,12 @@ REFRESH_MS = 1000
 
 #: Lines of the server log shown in the window.
 LOG_LINES = 200
+
+#: How often an open panel checks for a newer release, in milliseconds.
+UPDATE_CHECK_MS = 6 * 60 * 60 * 1000
+
+#: How long a reopened panel waits for the old one to let go of its lock.
+REOPEN_WAIT_S = 20
 
 RUNNING_STATES = {"starting", "running", "restarting", "stopping", "unsupervised"}
 
@@ -68,7 +75,7 @@ def controls_for(status: dict) -> dict[str, bool]:
     if current == "setup":
         # No .env: the app cannot start until a broker is chosen.
         return dict.fromkeys(
-            ("start", "stop", "restart", "open", "settings", "maintenance"), False
+            ("start", "stop", "restart", "open", "settings", "maintenance", "update"), False
         ) | {"setup": True}
     running = current in RUNNING_STATES
     return {
@@ -79,6 +86,8 @@ def controls_for(status: dict) -> dict[str, bool]:
         "settings": not running,
         "maintenance": not running,
         "setup": False,
+        # An update stops a running server itself, after asking.
+        "update": current != "stopping",
     }
 
 
@@ -116,20 +125,8 @@ def open_folder(path: Path) -> None:
 
 
 def uv_command(paths: Paths) -> tuple[list[str], dict]:
-    """``uv sync --frozen --no-dev`` with the install's own Python and download cache.
-
-    The same command ``install-desktop.ps1`` runs. ``--no-dev`` because uv
-    installs the ``dev`` group by default, and a client needs no test tools.
-    """
-    uv = paths.home / ("uv.exe" if IS_WINDOWS else "uv")
-    exe = str(uv) if uv.exists() else (shutil.which("uv") or "uv")
-    env = dict(os.environ)
-    if (paths.home / "python").is_dir():
-        env["UV_PYTHON_INSTALL_DIR"] = str(paths.home / "python")
-    env["UV_CACHE_DIR"] = str(paths.home / "cache")
-    env.setdefault("UV_HTTP_RETRIES", "5")
-    env.setdefault("UV_PYTHON_PREFERENCE", "only-managed")
-    return [exe, "sync", "--frozen", "--no-dev"], env
+    """``uv sync --frozen --no-dev`` for this install; the same command an update runs."""
+    return update.uv_sync_command(paths)
 
 
 # --- start at login -----------------------------------------------------------
@@ -174,6 +171,7 @@ class Panel:
         self.log_source: Path | None = None
         self.log_size = -1
         self._after_id = None
+        self.available: update.Manifest | None = None  # a newer release, once a check finds one
 
         root.title(f"{self.name} Control Panel")
         root.minsize(640, 560)
@@ -182,6 +180,7 @@ class Panel:
         self._load_settings()
         self.refresh()
         self.root.after(200, self._drain_events)
+        self.root.after(3000, self.check_quietly)
 
     # layout --------------------------------------------------------------
 
@@ -197,6 +196,14 @@ class Panel:
             self.banner, text="Finish installation", command=self.finish_install
         )
         self.banner_button.pack(side="right")
+
+        self.update_bar = ttk.Frame(outer)
+        self.update_label = ttk.Label(self.update_bar, foreground="#1f5fa8", wraplength=480)
+        self.update_label.pack(side="left", fill="x", expand=True)
+        self.update_button = ttk.Button(
+            self.update_bar, text="Update now", command=lambda: self.run_update()
+        )
+        self.update_button.pack(side="right")
 
         top = ttk.LabelFrame(outer, text="Server", padding=8)
         top.pack(fill="x", **pad)
@@ -272,6 +279,12 @@ class Panel:
             ttk.Button(tools, text="Repair dependencies", command=self.repair),
         ]
         for button in self.maintenance:
+            button.pack(side="left", padx=(0, 6))
+        self.update_tools = [
+            ttk.Button(tools, text="Check for updates", command=self.check_now),
+            ttk.Button(tools, text="Update from file", command=self.update_from_file),
+        ]
+        for button in self.update_tools:
             button.pack(side="left", padx=(0, 6))
         ttk.Button(
             tools, text="Open install folder", command=lambda: open_folder(self.paths.home)
@@ -427,6 +440,87 @@ class Panel:
 
         self._in_background("repair", work)
 
+    # updates ---------------------------------------------------------------
+
+    def check_quietly(self) -> None:
+        """Look for a newer release in the background; say nothing if there is none or no internet."""
+
+        def run():
+            with contextlib.suppress(update.UpdateRefused):
+                self.events.put(("check", "available", update.check(self.paths)))
+
+        threading.Thread(target=run, daemon=True).start()
+        self.root.after(UPDATE_CHECK_MS, self.check_quietly)
+
+    def check_now(self) -> None:
+        self._in_background("check", lambda: update.check(self.paths))
+
+    def update_from_file(self) -> None:
+        chosen = filedialog.askopenfilename(
+            parent=self.root,
+            title="Choose the release zip",
+            filetypes=[("Release zip", "*.zip")],
+        )
+        if chosen:
+            self.run_update(Path(chosen))
+
+    def run_update(self, zip_path: Path | None = None) -> None:
+        """Update to the announced release, or to ``zip_path``; stop and restart the server around it."""
+        if zip_path is None and self.available is None:
+            return
+        target = f"version {self.available.version}" if zip_path is None else zip_path.name
+        running = bool(self.status.get("supervised")) or self.status.get("state") in RUNNING_STATES
+        question = f"Update {self.name} to {target}?\n\n"
+        if running:
+            question += (
+                f"{self.name} stops while it updates, usually for a minute or two, and starts "
+                "again afterwards. Running Python strategies stop and do not restart by "
+                "themselves. Positions at your broker are not touched.\n\n"
+            )
+        question += "Your settings, login, data and strategies are kept."
+        if not messagebox.askokcancel(self.name, question, parent=self.root):
+            return
+        self._show_log_text(f"Updating {self.name}...\n")
+
+        def log(line: str) -> None:
+            self.events.put(("update", "line", line + "\n"))
+
+        def work():
+            if running:
+                log(f"Stopping {self.name}")
+                if not control.stop(self.paths):
+                    raise update.UpdateRefused(
+                        f"{self.name} did not stop in time, so nothing was changed. Try again."
+                    )
+            try:
+                if zip_path is None:
+                    return update.install_latest(self.paths, log=log)
+                return update.apply(zip_path, self.paths, log=log)
+            finally:
+                if running:
+                    log(f"Starting {self.name}")
+                    control.start(self.paths)
+
+        self._in_background("update", work)
+
+    def reopen(self) -> None:
+        """Start a fresh panel on the updated files and close this one."""
+        flags = subprocess.CREATE_NO_WINDOW if IS_WINDOWS else 0
+        subprocess.Popen(
+            [
+                control._background_python(),
+                str(self.paths.app / "launcher" / "panel.py"),
+                "--home",
+                str(self.paths.home),
+                "--app",
+                str(self.paths.app),
+                "--wait-lock",
+            ],
+            cwd=self.paths.app,
+            creationflags=flags,
+        )
+        self.root.destroy()
+
     def finish_install(self) -> None:
         script = self.paths.home / "install-desktop.ps1"
         if not script.exists():
@@ -455,8 +549,35 @@ class Panel:
                 if kind == "line":
                     self._append_log(value)
                     continue
+                if kind == "available":
+                    self.available = value
+                    continue
                 self.busy = None
-                if kind == "failed":
+                if kind == "failed" and isinstance(
+                    value, update.UpdateRefused | update.UpdateFailed
+                ):
+                    self._append_log(f"\n{value}\n")
+                    messagebox.showerror(self.name, str(value))
+                    self.log_source = None
+                elif name == "check" and kind == "done":
+                    self.available = value
+                    if value is None:
+                        current = update.installed_version(self.paths.app)
+                        messagebox.showinfo(
+                            self.name, f"{self.name} {current} is the latest version."
+                        )
+                elif name == "update" and kind == "done":
+                    if value is None:
+                        messagebox.showinfo(self.name, f"{self.name} is already up to date.")
+                    else:
+                        messagebox.showinfo(
+                            self.name,
+                            f"{self.name} is now version {value.new_version}. "
+                            "The control panel reopens to finish.",
+                        )
+                        self.reopen()
+                        return
+                elif kind == "failed":
                     messagebox.showerror(self.name, f"That did not work: {value}")
                 elif name == "start" and not value:
                     messagebox.showerror(
@@ -501,6 +622,8 @@ class Panel:
                 "restart": "Restarting...",
                 "repair": "Repairing dependencies...",
                 "reset": "Resetting...",
+                "update": "Updating...",
+                "check": "Checking for updates...",
             }.get(self.busy, message)
         self.message_label.configure(text=message)
 
@@ -514,6 +637,18 @@ class Panel:
         for widget in self.settings_widgets + self.maintenance:
             usable = enabled["settings"] and not self.busy
             widget.state(["!disabled"] if usable else ["disabled"])
+        for widget in [*self.update_tools, self.update_button]:
+            usable = enabled["update"] and not self.busy
+            widget.state(["!disabled"] if usable else ["disabled"])
+        if self.available is not None:
+            notes = f" {self.available.notes}" if self.available.notes else ""
+            current = update.installed_version(self.paths.app)
+            self.update_label.configure(
+                text=f"Version {self.available.version} is available (you have {current}).{notes}"
+            )
+            self.update_bar.pack(fill="x", before=self.top, pady=(0, 6))
+        else:
+            self.update_bar.pack_forget()
 
         network = envfile.read_network(self._env_text())
         address = f"On this PC: http://127.0.0.1:{network.http_port}"
@@ -537,7 +672,7 @@ class Panel:
             )
             self.banner.pack(fill="x", before=self.top, pady=(0, 6))
 
-        if self.busy != "repair":
+        if self.busy not in ("repair", "update"):
             self._refresh_log()
         # One pending refresh at a time: actions call refresh() directly, and
         # each call must replace the scheduled one, not add a second chain.
@@ -796,6 +931,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="panel")
     parser.add_argument("--home", type=Path, default=default_home())
     parser.add_argument("--app", type=Path)
+    parser.add_argument(
+        "--wait-lock", action="store_true", help="wait for a closing panel (after an update)"
+    )
     args = parser.parse_args(argv)
     if args.home is None:
         parser.error("--home is required outside the desktop install")
@@ -804,7 +942,12 @@ def main(argv: list[str] | None = None) -> int:
     dpi_aware()
     root = tk.Tk()
     lock = InstanceLock(paths.run / "panel.lock")
-    if not lock.acquire():
+    acquired = lock.acquire()
+    deadline = time.monotonic() + (REOPEN_WAIT_S if args.wait_lock else 0)
+    while not acquired and time.monotonic() < deadline:
+        time.sleep(0.25)
+        acquired = lock.acquire()
+    if not acquired:
         root.withdraw()
         messagebox.showinfo(display_name(paths.app), "The control panel is already open.")
         root.destroy()
