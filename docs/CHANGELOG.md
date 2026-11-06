@@ -8,6 +8,44 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-06
+
+### Strategy Host and Desktop Update Release
+
+9 commits since 1.2.0. Full notes:
+[version-1.3.0-released.md](releases/version-1.3.0-released.md). No database
+migration, no new required setting and no API change.
+
+### Highlights
+
+- **Strategy kit:** settings, saved state, resume checked against broker
+  positions, orders that wait for their fill, a feed watch and a clean stop with a
+  reason, for any Python strategy that imports it.
+- **Strategy host:** the card says why a strategy stopped. An errored strategy
+  waits for Start, and after a crash a strategy restarts only inside its own
+  schedule.
+- **Settings form:** a settings icon on each strategy card, built from the
+  script's `PARAMS`, with saved state shown and clearable.
+- **Navigation:** Python strategies take Trading's place in the top navbar;
+  Trading moves to the profile menu.
+- **Desktop update in place:** the control panel offers new versions and updates
+  with one click, keeping the client's data and rolling back on any failure.
+
+### Fixes
+
+- The Linux installers cloned the upstream repository; servers now install and
+  update from FastAlgo.
+- `scripts/build_release.py` no longer fails when `--out` is outside the checkout.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - strategy host and desktop update direction and decisions,
+  page layout, and the report behind the installer fix.
+
 ## [1.2.0] - 2026-11-05
 
 ### Desktop Release
