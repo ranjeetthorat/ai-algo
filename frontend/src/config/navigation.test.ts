@@ -18,7 +18,7 @@ describe('Navigation Config', () => {
       expect(labels).toContain('Orderbook')
       expect(labels).toContain('Positions')
       expect(labels).toContain('Platforms')
-      expect(labels).toContain('Trading')
+      expect(labels).toContain('Python')
       expect(labels).toContain('Strategies')
 
       // Strategies sits directly after Platforms. Asserting the position, not
@@ -61,7 +61,7 @@ describe('Navigation Config', () => {
 
     it('contains remaining nav items', () => {
       const sheetLabels = mobileSheetItems.map((item) => item.label)
-      expect(sheetLabels).toContain('Trading')
+      expect(sheetLabels).toContain('Python')
       expect(sheetLabels).toContain('Platforms')
       expect(sheetLabels).toContain('Logs')
     })
@@ -77,6 +77,12 @@ describe('Navigation Config', () => {
       // positioned right after API Key.
       expect(labels).toContain('Action Center')
       expect(labels.indexOf('Action Center')).toBe(labels.indexOf('API Key') + 1)
+    })
+
+    it('keeps Trading reachable after Python took its navbar slot', () => {
+      expect(profileMenuItems.map((item) => item.href)).toContain('/trading')
+      expect(navItems.map((item) => item.href)).not.toContain('/trading')
+      expect(profileMenuItems.map((item) => item.href)).not.toContain('/python')
     })
   })
 

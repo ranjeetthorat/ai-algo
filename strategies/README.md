@@ -3,6 +3,8 @@
 ## Overview
 A complete web-based strategy hosting and scheduling system for OpenAlgo, accessible at `/python`.
 
+Full reference for writing and hosting strategies (run model, SDK, the strategy kit, pitfalls): [docs/strategycontext/](../docs/strategycontext/README.md).
+
 ## Features
 - **Upload & Manage**: Upload Python strategy scripts through web interface
 - **Start/Stop**: Control strategy execution with one click
@@ -10,7 +12,7 @@ A complete web-based strategy hosting and scheduling system for OpenAlgo, access
 - **Exchange-aware calendar**: Each strategy is tagged with an exchange (NSE / BSE / NFO / BFO / MCX / BCD / CDS / CRYPTO) and the host gates start/stop using that exchange's holiday calendar — an MCX strategy keeps running on an NSE/BSE holiday during the MCX session, a CRYPTO strategy ignores all holidays, and SPECIAL_SESSION rows (Muhurat, DR-drill) override weekend rejects
 - **Process Isolation**: Each strategy runs in its own process
 - **Real-time Monitoring**: View logs and strategy status
-- **Parameter Configuration**: Pass custom parameters to strategies
+- **Settings and saved state**: through the strategy kit (`strategies/lib/strategy_kit.py`); see docs/strategycontext/writing-strategies.md
 
 ## Installation
 
@@ -31,7 +33,6 @@ http://localhost:5000/python
 - Provide a name for your strategy
 - Select your Python script file
 - **Pick the exchange** the strategy trades on (NSE / BSE / NFO / BFO / MCX / BCD / CDS / CRYPTO). This drives which calendar the host uses to gate scheduled start/stop. Pick CRYPTO for 24/7 strategies — the host will skip all holiday checks and pre-fill the schedule to all 7 days
-- Add any parameters (will be available as environment variables)
 - Click "Upload Strategy"
 
 ### 2. Start/Stop Strategy
@@ -149,9 +150,9 @@ Strategies are launched with `os.environ.copy()`, so they inherit **every** vari
 >
 > Note: there is **no `HOST_URL` variable** anywhere in OpenAlgo. Only `HOST_SERVER` (REST), `OPENALGO_HOST` (injected fallback alias), and `WEBSOCKET_URL` (WS).
 
-### Per-strategy parameters
+### Per-strategy settings
 
-Plus any custom parameters you define in the strategy upload form — these become additional environment variables.
+The upload form has no parameters field. A strategy declares its settings in a `PARAMS` block and reads them through the strategy kit; see docs/strategycontext/writing-strategies.md. Also injected for the kit: `PYTHONPATH` (includes `strategies/lib`), `OPENALGO_STRATEGY_STATE_DIR`, and single-thread settings for numpy.
 
 ## Directory Structure
 
@@ -250,7 +251,7 @@ The "session today" lookup uses the same calendar DB that powers `/api/v1/market
 1. **Strategy won't start**: Check logs for errors, ensure Python script is valid
 2. **Schedule not working**: Verify APScheduler is running, check system time
 3. **Can't stop strategy**: Process may be stuck, use system task manager if needed
-4. **Parameters not working**: Ensure parameter names are valid environment variable names
+4. **Settings not working**: Check the `PARAMS` declaration; an invalid one stops the run with the reason in the log
 5. **Strategy didn't run on a partial holiday (e.g., MCX evening on NSE holiday)**:
    - Open the strategy → Schedule → confirm `Exchange` is set to the right market (legacy strategies default to `NSE` after the upgrade and need a one-time edit if they trade MCX/CRYPTO/etc.)
    - Confirm the date has a row in admin → Holidays with the partial-open window for your exchange

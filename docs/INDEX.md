@@ -20,6 +20,7 @@ need → drill into the specific file. Don't load everything at once.
 | Contract lot sizes | [prompt/LotSize.md](prompt/LotSize.md) |
 | WebSocket subscription & message format | [prompt/websockets-format.md](prompt/websockets-format.md) · [prompt/websockets-verbose-control.md](prompt/websockets-verbose-control.md) |
 | Service-layer functions & Flow JSON import | [prompt/services_documentation.md](prompt/services_documentation.md) · [prompt/flow-import-format.md](prompt/flow-import-format.md) |
+| Python strategies (`/python`) — writing, hosting, SDK usage, run model, pitfalls | [strategycontext/README.md](strategycontext/README.md) |
 | Strategy module & risk engine (multi-leg options, signal mode, RMS) | [prompt/strategy_rms_documentation.md](prompt/strategy_rms_documentation.md) · [api/strategy-services/](api/strategy-services/) · [prd/strategy-module-rms.md](prd/strategy-module-rms.md) · [bdd/strategy_module_rms.feature](bdd/strategy_module_rms.feature) |
 | Technical indicators (`ta` library) | [<prompt/indicators/openalgo indicators - introduction.md>](<prompt/indicators/openalgo indicators - introduction.md>) |
 | The charting terminal at `/trading`, its order dock and its shortcuts | [userguide/32-charting-terminal](userguide/32-charting-terminal/README.md) |
@@ -32,6 +33,7 @@ need → drill into the specific file. Don't load everything at once.
 | Topic | Entry point |
 |---|---|
 | Ubuntu server install | [installation-guidelines/getting-started/ubuntu-server-installation.md](installation-guidelines/getting-started/ubuntu-server-installation.md) |
+| Windows desktop install, control panel, broker reset | [installation-guidelines/getting-started/windows-desktop-installation.md](installation-guidelines/getting-started/windows-desktop-installation.md) |
 | Docker | [docker/README.md](docker/README.md) |
 | Upgrade / SMTP / TOTP / forgot-password | https://docs.openalgo.in/installation-guidelines/getting-started/ |
 | Broker integration (36 plugins) | [broker-integration-guide.md](broker-integration-guide.md) |

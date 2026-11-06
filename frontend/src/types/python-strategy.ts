@@ -11,6 +11,10 @@ export interface PythonStrategy {
   last_started: string | null
   last_stopped: string | null
   error_message: string | null
+  /** Shown on a running card, e.g. "Restarted after the server stopped (10:42 IST)". */
+  notice?: string | null
+  /** Exit code of the last run that ended on its own (3: stopped with a reason, 4: code error). */
+  last_exit_code?: number | null
   is_scheduled: boolean
   manually_stopped?: boolean
   schedule_start_time: string | null
@@ -18,6 +22,41 @@ export interface PythonStrategy {
   schedule_days: string[]
   created_at: string
   updated_at: string
+}
+
+/** A setting a strategy declares in its PARAMS block (see docs/strategycontext/writing-strategies.md). */
+export type StrategyParamValue = string | number | boolean
+
+export interface StrategyParamField {
+  name: string
+  type: 'int' | 'float' | 'str' | 'bool' | 'choice'
+  default: StrategyParamValue
+  /** The saved value, or the default when nothing valid is saved. */
+  value: StrategyParamValue
+  min?: number
+  max?: number
+  options?: Array<string | number>
+  label?: string
+  help?: string
+}
+
+export interface SavedStateSummary {
+  /** Trading date the state belongs to (YYYY-MM-DD). */
+  date: string | null
+  open_positions: number | null
+  pending_orders?: number
+  damaged: boolean
+}
+
+export interface StrategySettings {
+  /** In the order the script declares them. */
+  fields: StrategyParamField[]
+  /** Why the PARAMS block could not be read, if it could not. */
+  error: string | null
+  /** Saved values that no longer fit the declaration (the default is shown instead). */
+  problems: string[]
+  is_running: boolean
+  saved_state: SavedStateSummary | null
 }
 
 export interface PythonStrategyContent {

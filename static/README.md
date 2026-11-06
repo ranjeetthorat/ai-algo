@@ -1,7 +1,8 @@
 # FastAlgo public site
 
 A static copy of the app's home page (`frontend/src/pages/Home.tsx`) for
-hosting on its own, without the app's log-in and installation links. It needs
+hosting on its own. In place of the app's log-in it offers the Windows desktop
+download, and it adds a section on the supported brokers. It needs
 no build step, no server and no external files: open `index.html` in a browser
 to preview it.
 
@@ -9,14 +10,19 @@ to preview it.
 
 - `index.html` - the page. Styles, icons and the light/dark switch are inline.
 - `site-config.js` - settings you may want to change without touching the page:
-  the Telegram support link. A link left empty is hidden.
+  the download link and the note under it, and the Telegram support link. A
+  value left empty is hidden.
 - `assets/` - logo, favicon and touch icon, copied from
   `frontend/src/brand/assets/`.
 
 ## Hosting
 
 Upload the contents of this folder as they are, with `index.html` at the root.
-Include `site-config.js`: without it the Telegram links stay hidden.
+Include `site-config.js`: without it the download button and the Telegram links
+stay hidden.
+
+**For each release**, upload the new zip from `release/`, then change
+`downloadUrl` and `downloadNote` in `site-config.js`.
 
 - **S3:** enable static website hosting on the bucket, set the index document to
   `index.html`, and upload `index.html` and `assets/`.
@@ -29,10 +35,11 @@ link previews will show no image.
 
 ## Keeping it in step with the app
 
-This page is a hand-maintained copy. The product name, tagline, maker, support
-link and contact email come from `frontend/src/brand/brand.ts`, the colours from
-the "Ink and Pulse" tokens in `frontend/src/index.css`, and the copy and feature
-counts from `Home.tsx`. Change those first, then mirror the change here. The
+This page is a hand-maintained copy. The product name, tagline, maker and support
+link come from `frontend/src/brand/brand.ts`, the colours from the "Ink and Pulse"
+tokens in `frontend/src/index.css`, and the copy and feature counts from
+`Home.tsx`. The broker list mirrors `VALID_BROKERS` in `.sample.env`, without the
+Dhan sandbox, and with the two 5paisa plugins shown once. Change those first, then mirror the change here. The
 Telegram link lives in `site-config.js` and matches `supportTelegramUrl` in
 `brand.ts`.
 
