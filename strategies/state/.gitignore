@@ -1,0 +1,3 @@
+# Each strategy's saved state, written at run time by strategies/lib/strategy_kit.py
+*
+!.gitignore
