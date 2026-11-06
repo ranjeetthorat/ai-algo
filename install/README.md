@@ -61,10 +61,10 @@ mkdir -p ~/openalgo-install
 cd ~/openalgo-install
 
 # Download the installation script
-wget https://raw.githubusercontent.com/marketcalls/openalgo/main/install/install.sh
+wget https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/install.sh
 
 # Or using curl
-curl -O https://raw.githubusercontent.com/marketcalls/openalgo/main/install/install.sh
+curl -O https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/install.sh
 
 # Make the script executable
 chmod +x install.sh
@@ -381,7 +381,7 @@ After installation completes, verify each deployment:
 ## Support
 
 For issues and support:
-- Check the [GitHub repository](https://github.com/marketcalls/openalgo)
+- Contact [TinyCompute support](https://www.tinycompute.site)
 - Review the logs using commands provided above
 - Contact support with relevant log information
 

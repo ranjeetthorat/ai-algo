@@ -72,7 +72,7 @@ ssh user@your_server_ip
 mkdir -p ~/openalgo-install
 cd ~/openalgo-install
 
-wget https://raw.githubusercontent.com/marketcalls/openalgo/main/install/install.sh
+wget https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/install.sh
 chmod +x install.sh
 ```
 
@@ -120,7 +120,7 @@ The Nginx vhost name `openalgo.conf` is intentionally fixed — `install/change-
 The default `install.sh` is single-deploy per server. If you need 2+ OpenAlgo instances side by side (different broker per instance, etc.), use the dedicated multi-deploy installer:
 
 ```bash
-wget https://raw.githubusercontent.com/marketcalls/openalgo/main/install/install-multi.sh
+wget https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/install-multi.sh
 chmod +x install-multi.sh
 sudo ./install-multi.sh
 ```
@@ -238,7 +238,7 @@ The MCP URL to give your AI client is the same as your dashboard URL with `/mcp`
    ```bash
    cd ~/openalgo-install
    rm -f install.sh
-   wget https://raw.githubusercontent.com/marketcalls/openalgo/main/install/install.sh
+   wget https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/install.sh
    chmod +x install.sh
    sudo ./install.sh
    ```
@@ -279,7 +279,7 @@ ls /var/python/openalgo-flask/
 
 ```bash
 cd ~/openalgo-install
-wget https://raw.githubusercontent.com/marketcalls/openalgo/main/install/update.sh
+wget https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/update.sh
 chmod +x update.sh
 sudo ./update.sh
 ```
@@ -290,7 +290,7 @@ The update script detects both layouts (single-deploy at `/var/python/openalgo` 
 
 ```bash
 cd ~/openalgo-install
-wget https://raw.githubusercontent.com/marketcalls/openalgo/main/install/change-domain.sh
+wget https://raw.githubusercontent.com/ranjeetthorat/ai-algo/main/install/change-domain.sh
 chmod +x change-domain.sh
 sudo ./change-domain.sh
 ```
@@ -338,9 +338,8 @@ The script updates `.env` (`HOST_SERVER`, `WEBSOCKET_URL`), the Nginx vhost's `s
 
 ### Support
 
-* GitHub: [github.com/marketcalls/openalgo](https://github.com/marketcalls/openalgo)
-* Documentation: [docs.openalgo.in](https://docs.openalgo.in)
-* Discord: [openalgo.in/discord](https://www.openalgo.in/discord)
+* TinyCompute support: [www.tinycompute.site](https://www.tinycompute.site)
+* Product site: [fastalgo.tinycompute.site](https://fastalgo.tinycompute.site)
 
 Remember to:
 
@@ -348,20 +347,3 @@ Remember to:
 * Monitor system resources
 * Keep the system updated
 * Review security best practices
-
----
-
-# Agent Instructions: Querying This Documentation
-
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://docs.openalgo.in/installation-guidelines/getting-started/ubuntu-server-installation.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

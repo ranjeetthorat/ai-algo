@@ -34,8 +34,7 @@ need → drill into the specific file. Don't load everything at once.
 |---|---|
 | Ubuntu server install | [installation-guidelines/getting-started/ubuntu-server-installation.md](installation-guidelines/getting-started/ubuntu-server-installation.md) |
 | Windows desktop install, control panel, broker reset | [installation-guidelines/getting-started/windows-desktop-installation.md](installation-guidelines/getting-started/windows-desktop-installation.md) |
-| Docker | [docker/README.md](docker/README.md) |
-| Upgrade / SMTP / TOTP / forgot-password | https://docs.openalgo.in/installation-guidelines/getting-started/ |
+| Upgrade a server install (`install/update.sh`) | [installation-guidelines/getting-started/ubuntu-server-installation.md](installation-guidelines/getting-started/ubuntu-server-installation.md) |
 | Broker integration (36 plugins) | [broker-integration-guide.md](broker-integration-guide.md) |
 | Release notes & changelog | [releases/](releases/) · [CHANGELOG.md](CHANGELOG.md) |
 
@@ -72,5 +71,5 @@ need → drill into the specific file. Don't load everything at once.
 
 ## Governance
 
-- User responsibilities & risk ownership: https://docs.openalgo.in/responsibilities
-- Repository: https://github.com/marketcalls/openalgo · Docs: https://docs.openalgo.in
+- Repository: https://github.com/ranjeetthorat/ai-algo · Product site: https://fastalgo.tinycompute.site · Support: https://www.tinycompute.site
+- Upstream attribution (AGPL) stays in `NOTICE`, `License.md` and the `/about` page; never link users to the upstream project.
