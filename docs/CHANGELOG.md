@@ -8,6 +8,31 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-13
+
+### Desktop License Gate Release
+
+2 commits since 1.4.0. Full notes:
+[version-1.5.0-released.md](releases/version-1.5.0-released.md). No database
+migration, no new required setting and no API change.
+
+### Highlights
+
+- **Desktop license gate:** the Windows installer registers the PC's MAC, and the
+  keeper checks it before every server start. `ok` starts; `not_ok` and `erase`
+  refuse to start with a message to contact support; an unreachable server also
+  refuses. It is a deterrent, never destructive (a blocked license only stops the
+  start), off unless a key is set, and server installs are not gated.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - license design, and the decision to keep a revoked license
+  non-destructive.
+
 ## [1.4.0] - 2026-11-13
 
 ### Strategy Start Mode Release
