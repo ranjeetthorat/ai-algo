@@ -8,6 +8,35 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-13
+
+### Strategy Start Mode Release
+
+4 commits since 1.3.0. Full notes:
+[version-1.4.0-released.md](releases/version-1.4.0-released.md). No database
+migration, no new required setting and no API change.
+
+### Highlights
+
+- **Start mode:** a strategy setting. "new" starts fresh and sets the saved state
+  aside; "old" continues it as it is. The broker's positions are no longer
+  compared at start, so you decide.
+- **Short Straddle Window example:** sells a call and a put, buys both back when
+  either premium rises by the window percent, and repeats up to a daily limit,
+  with an ATM offset, a first entry time and a square-off time.
+- **Strike selection:** `strategies/lib/option_strikes.py` rounds strikes the way
+  the Node app does, for any underlying, verified against the original
+  JavaScript.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - straddle strategy rules, the rounding to match, and the
+  start mode decision.
+
 ## [1.3.0] - 2026-11-06
 
 ### Strategy Host and Desktop Update Release
