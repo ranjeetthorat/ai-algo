@@ -1,8 +1,8 @@
 {
-  "version": "1.4.0",
-  "url": "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/FastAlgo-1.4.0.zip",
-  "sha256": "5c7e24ef5289ad506a13cbd5d459c5f8aecf5828da9aa990892c2603b11f1346",
-  "size": 13119844,
+  "version": "1.5.0",
+  "url": "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/FastAlgo-1.5.0.zip",
+  "sha256": "0fca57d1dccf1144fe44f7ecf8f522da3389223bf34ea0ccf40d8ca645da82d3",
+  "size": 13129530,
   "released": "2026-11-13",
-  "notes": "Python strategies: you choose whether a start is new or continues where it left off, a ready-made short straddle strategy, and strike selection that matches the Node app."
+  "notes": "A license gate for Windows desktop installs: the PC is registered at install and checked before every start, as a deterrent against casual redistribution."
 }
