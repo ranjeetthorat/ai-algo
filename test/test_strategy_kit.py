@@ -388,75 +388,96 @@ def test_resume_fresh_without_state(client, tmp_path):
     assert json.loads(s.state_path.read_text())["_kit"]["date"] == TODAY
 
 
-def test_resume_continues_when_state_matches_broker(client, tmp_path):
+def test_new_mode_sets_saved_state_aside(client, tmp_path, capsys):
+    write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65)], extra={"legs": ["CE1"]})
+    s = make(client, tmp_path)
+    assert s.resume("new") == "fresh"
+    assert s.state["_kit"]["fills"] == [] and "legs" not in s.state
+    kept = list(tmp_path.glob("kit_test.set-aside-*.json"))
+    assert len(kept) == 1, "the old state is renamed, never deleted"
+    assert json.loads(kept[0].read_text())["legs"] == ["CE1"]
+    out = capsys.readouterr().out
+    assert "Starting in NEW mode: fresh start" in out and kept[0].name in out
+
+
+def test_old_mode_continues_without_asking_the_broker(client, tmp_path, capsys):
+    # The broker says flat; the saved state says short. Old mode trusts the user.
     write_state(
         tmp_path,
-        TODAY,
+        "2026-11-09",
         fills=[fill("CE1", "SELL", 65), fill("PE1", "SELL", 65)],
-        mode="live",
         extra={"legs": ["CE1", "PE1"]},
     )
-    client.positions = [pos("CE1", -65), pos("PE1", -65)]
+    client.positions = []
+    client.read_failures = [{"status": "error", "message": "must not be called"}]
     s = make(client, tmp_path)
-    assert s.resume() == "continue"
+    assert s.resume("old") == "continue"
     assert s.state["legs"] == ["CE1", "PE1"]
     assert s.open_positions() == {"NFO:CE1:MIS": -65, "NFO:PE1:MIS": -65}
+    assert client.read_failures, "positionbook was not read"
+    out = capsys.readouterr().out
+    assert "Starting in OLD mode: continuing the saved state last used on 2026-11-09" in out
+    assert "Open: NFO:CE1:MIS -65, NFO:PE1:MIS -65" in out
 
 
-def test_resume_continues_flat_after_todays_exit(client, tmp_path):
-    write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65), fill("CE1", "BUY", 65)])
+def test_old_mode_keeps_positions_across_days(client, tmp_path):
+    write_state(tmp_path, "2026-11-01", fills=[fill("CE1", "SELL", 65, product="NRML")])
     s = make(client, tmp_path)
-    assert s.resume() == "continue"
+    s.resume("old")
+    assert s.open_positions() == {"NFO:CE1:NRML": -65}
+    s.order("CE1", "NFO", "BUY", 65, product="NRML")
     assert s.open_positions() == {}
 
 
-def test_resume_stops_on_quantity_mismatch(client, tmp_path):
-    write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65)])
-    client.positions = [pos("CE1", -130)]
+def test_old_mode_flat_says_so(client, tmp_path, capsys):
+    write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65), fill("CE1", "BUY", 65)])
     s = make(client, tmp_path)
-    with pytest.raises(StrategyStop, match="NFO:CE1:MIS: saved -65, broker -130"):
-        s.resume()
+    assert s.resume("old") == "continue"
+    assert "No open positions." in capsys.readouterr().out
 
 
-def test_resume_stops_when_broker_is_flat_but_state_is_not(client, tmp_path):
-    write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65)])
+def test_old_mode_without_saved_state_starts_fresh(client, tmp_path, capsys):
     s = make(client, tmp_path)
-    with pytest.raises(StrategyStop, match="saved -65, broker 0"):
-        s.resume()
+    assert s.resume("old") == "fresh"
+    assert "Starting in OLD mode, but there is no saved state" in capsys.readouterr().out
 
 
-def test_resume_stops_on_pending_order(client, tmp_path):
-    write_state(tmp_path, TODAY, pending={"x": {"symbol": "CE1"}})
+def test_old_mode_warns_about_an_order_in_flight_and_drops_it(client, tmp_path, capsys):
+    write_state(
+        tmp_path, TODAY, pending={"r1": {"symbol": "CE1", "action": "SELL", "quantity": 65}}
+    )
     s = make(client, tmp_path)
-    with pytest.raises(StrategyStop, match="An order for CE1 was in flight"):
-        s.resume()
+    assert s.resume("old") == "continue"
+    assert s.state["_kit"]["pending"] == {}
+    assert "WARNING: an order for CE1 was in flight" in capsys.readouterr().out
 
 
-def test_resume_stops_on_mode_change(client, tmp_path):
+def test_old_mode_warns_on_a_mode_change_then_watches_from_here(client, tmp_path, capsys):
     write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65)], mode="live")
-    client.positions = [pos("CE1", -65)]
     client.analyze = True
     s = make(client, tmp_path)
-    with pytest.raises(
-        StrategyStop, match="placed in live mode but the platform is now in analyze"
-    ):
-        s.resume()
+    assert s.resume("old") == "continue"
+    assert "placed in live mode, and the platform is now in analyze mode" in capsys.readouterr().out
+    s.order("CE1", "NFO", "BUY", 65)  # not refused: this run started in analyze
+    client.analyze = False
+    with pytest.raises(StrategyStop, match="switched from analyze to live"):
+        s.order("CE1", "NFO", "SELL", 65)
 
 
-def test_resume_archives_old_state_when_flat(client, tmp_path):
-    write_state(tmp_path, "2026-11-04", fills=[fill("CE1", "SELL", 65)], extra={"legs": ["CE1"]})
-    s = make(client, tmp_path)
-    assert s.resume() == "fresh"
-    assert (tmp_path / "kit_test.2026-11-04.json").exists()
-    assert "legs" not in s.state
+def test_start_mode_setting_decides_when_no_mode_is_passed(client, tmp_path, monkeypatch):
+    schema = dict(
+        PARAMS, start_mode={"type": "choice", "default": "new", "options": ["new", "old"]}
+    )
+    write_state(tmp_path, TODAY, fills=[fill("CE1", "SELL", 65)])
+    monkeypatch.setenv("OPENALGO_STRATEGY_PARAMS", json.dumps({"start_mode": "old"}))
+    assert make(client, tmp_path, schema).resume() == "continue"
+    monkeypatch.setenv("OPENALGO_STRATEGY_PARAMS", json.dumps({"start_mode": "new"}))
+    assert make(client, tmp_path, schema).resume() == "fresh"
 
 
-def test_resume_stops_on_old_state_with_open_position(client, tmp_path):
-    write_state(tmp_path, "2026-11-04", fills=[fill("CE1", "SELL", 65, product="NRML")])
-    client.positions = [pos("CE1", -65, product="NRML")]
-    s = make(client, tmp_path)
-    with pytest.raises(StrategyStop, match="earlier day but the broker still holds NFO:CE1:NRML"):
-        s.resume()
+def test_an_unknown_mode_stops(client, tmp_path):
+    with pytest.raises(StrategyStop, match="new or old"):
+        make(client, tmp_path).resume("sideways")
 
 
 def test_damaged_state_file_stops(client, tmp_path, monkeypatch, capsys):

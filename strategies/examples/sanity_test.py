@@ -5,7 +5,7 @@ Sanity Test Strategy (built on the strategy kit)
 Checks the Python strategy host end to end:
 
   1. Settings  - read from the strategy card (PARAMS below)
-  2. Resume    - fresh start, or continue today's position after a restart
+  2. Resume    - Start mode: new starts fresh, old continues the saved position
   3. Feed      - live NIFTY spot from the shared feed, with the feed watch on
   4. Orders    - SELL 1 lot ATM CE and 1 lot ATM PE on one expiry, fills confirmed
   5. Stream    - live prices for both legs for STREAM_SECONDS, then finish
@@ -21,6 +21,14 @@ the run with the reason shown on the strategy card.
 from strategy_kit import Strategy
 
 PARAMS = {
+    "start_mode": {
+        "type": "choice",
+        "default": "new",
+        "options": ["new", "old"],
+        "label": "Start mode",
+        "help": "new: start fresh; the saved state is set aside. old: continue the saved "
+        "state as it is. With old, you make sure it matches your positions.",
+    },
     "expiry": {"type": "str", "default": "09NOV26", "label": "Expiry (DDMMMYY)"},
     "lots": {"type": "int", "default": 1, "min": 1, "max": 5, "label": "Lots per leg"},
     "product": {"type": "choice", "default": "MIS", "options": ["MIS", "NRML"], "label": "Product"},

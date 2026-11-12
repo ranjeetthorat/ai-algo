@@ -23,8 +23,8 @@ What the kit gives a strategy:
 
 - s.params        settings from the strategy card merged over PARAMS defaults
 - s.state         the strategy's own dict, saved with s.save_state()
-- s.resume()      "fresh" or "continue", decided from saved state and the
-                  broker's positions; any disagreement stops the run
+- s.resume()      "fresh" or "continue", from the strategy's Start mode
+                  setting: New sets saved state aside, Old continues it as is
 - s.order(...)    places an order, waits for its outcome, records it, and stops
                   the run if it is rejected or its outcome cannot be confirmed
 - s.read(...)     a read-only SDK call with short retries on network errors
@@ -479,18 +479,18 @@ class Strategy:
 
     def _kit(self):
         kit = self.state.setdefault("_kit", {})
-        if kit.get("date") != _today():
-            kit.clear()
-            kit.update({"date": _today(), "pending": {}, "fills": []})
         kit.setdefault("pending", {})
         kit.setdefault("fills", [])
+        kit["date"] = _today()  # the last day the strategy used this state
         return kit
 
     def open_positions(self):
-        """Net quantity per "EXCHANGE:SYMBOL:PRODUCT" implied by today's recorded fills (non-zero only)."""
+        """Net quantity per "EXCHANGE:SYMBOL:PRODUCT" implied by the recorded fills (non-zero only).
+
+        Fills are kept until a New start sets the state aside, so positions
+        carried over to another day with Old are still known.
+        """
         kit = self.state.get("_kit") or {}
-        if kit.get("date") != _today():
-            return {}
         net = self._net(kit.get("fills") or [])
         return {k: v for k, v in net.items() if v}
 
@@ -498,75 +498,92 @@ class Strategy:
     def _net(fills):
         return net_positions(fills)
 
-    def resume(self):
-        """Decide whether this run starts fresh or continues today's position.
+    def resume(self, mode=None):
+        """Start fresh or continue the saved state, as the user chose.
 
-        "fresh"     no saved state for today, and the broker is flat in every
-                    contract an older state names. Older state is archived.
-        "continue"  today's saved state agrees exactly with the broker's
-                    positions. Read what you saved from s.state.
-        Anything else stops the run with the reason.
+        ``mode`` is "new" or "old"; without it, the strategy's ``start_mode``
+        setting decides, and "new" when it has none.
+
+        "new"  Any saved state is set aside (renamed, never deleted) and the run
+               starts empty. Returns "fresh".
+        "old"  The saved state is continued exactly as it is. Nothing is checked
+               against the broker: the user is responsible for the saved state
+               matching their positions. Returns "continue", or "fresh" when
+               there is no saved state to continue.
         """
-        kit = self.state.get("_kit") or {}
-        book = self.positions()
+        mode = str(mode or self.params.get("start_mode") or "new").lower()
+        if mode not in ("new", "old"):
+            raise StrategyStop(f"Start mode must be new or old, not {mode}.")
+        saved = bool(self.state)
 
-        if kit.get("date") != _today():
-            held = {k: book.get(k, 0) for k in self._net(kit.get("fills") or [])}
-            held = {k: v for k, v in held.items() if v}
-            if held:
-                raise StrategyStop(
-                    "Saved state is from an earlier day but the broker still holds "
-                    + ", ".join(f"{k} quantity {v}" for k, v in held.items())
-                    + ". Handle those positions, then clear saved state in the strategy settings."
-                )
-            if self.state:
-                self._archive_state(kit.get("date") or "old")
+        if mode == "new":
+            set_aside = (
+                self._archive_state(f"set-aside-{datetime.now(IST):%Y%m%d-%H%M%S}")
+                if saved
+                else None
+            )
             self.state = {}
             self._kit()
             self.save_state()
-            self.log("Resume check: fresh start")
+            self.log(
+                "Starting in NEW mode: fresh start"
+                + (
+                    f". The previous saved state was set aside as {set_aside}."
+                    if set_aside
+                    else ", no saved state."
+                )
+            )
             return "fresh"
 
+        if not saved:
+            self.state = {}
+            self._kit()
+            self.save_state()
+            self.log("Starting in OLD mode, but there is no saved state: fresh start.")
+            return "fresh"
+
+        kit = self.state.get("_kit") or {}
+        last_used = kit.get("date") or "an unknown day"
+        for record in (kit.get("pending") or {}).values():
+            self.log(
+                f"WARNING: an order for {record.get('symbol', '?')} was in flight when the last run "
+                "ended, so its outcome is unknown. It is treated as not filled; check the order book."
+            )
         if kit.get("pending"):
-            symbols = ", ".join(p.get("symbol", "?") for p in kit["pending"].values())
-            raise StrategyStop(
-                f"An order for {symbols} was in flight when the last run ended, so its outcome is unknown. "
-                "Check the order book and positions, then clear saved state in the strategy settings."
+            kit["pending"] = {}
+        recorded = kit.get("mode")
+        current = self._mode()
+        if recorded and recorded != current:
+            self.log(
+                f"WARNING: the saved orders were placed in {recorded} mode, and the platform is now "
+                f"in {current} mode."
             )
-
-        mismatches = []
-        for key, expected in self._net(kit.get("fills") or []).items():
-            actual = book.get(key, 0)
-            if actual != expected:
-                mismatches.append(f"{key}: saved {expected}, broker {actual}")
-        if mismatches:
-            raise StrategyStop(
-                "Saved state does not match the broker: "
-                + "; ".join(mismatches)
-                + ". Check the positions, then clear saved state in the strategy settings."
-            )
-
-        mode = kit.get("mode")
-        if mode and mode != self._mode():
-            raise StrategyStop(
-                f"Today's orders were placed in {mode} mode but the platform is now in "
-                f"{self._mode()} mode. Switch it back, or clear saved state after handling the positions."
-            )
-
+            # From here on, a switch during this run still stops it (see order()).
+            kit["mode"] = current
+        held = self.open_positions()
+        self._kit()
+        self.save_state()
         self.log(
-            "Resume check: continuing today's position "
-            + (", ".join(f"{k} {v}" for k, v in self.open_positions().items()) or "(flat)")
+            f"Starting in OLD mode: continuing the saved state last used on {last_used}. "
+            + (
+                "Open: " + ", ".join(f"{k} {v}" for k, v in held.items())
+                if held
+                else "No open positions."
+            )
         )
         return "continue"
 
     def _archive_state(self, label):
+        """Rename the saved state aside. Returns the new file name, or None."""
         path = self.state_path
         if path.exists():
             target = path.with_name(f"{self.strategy_id}.{label}.json")
             try:
                 os.replace(path, target)
+                return target.name
             except OSError:
                 pass
+        return None
 
     # -- orders -------------------------------------------------------------
 
