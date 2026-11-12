@@ -33,7 +33,7 @@ Plan: [docs/plans/2026-11-06-python-strategy-kit-implementation-plan.md](../plan
 
 | Feature | Status |
 | --- | --- |
-| Strategy kit (`strategies/lib/strategy_kit.py`): settings, saved state, resume rule, safe orders, clean stop with reason | Done (M1) |
+| Strategy kit (`strategies/lib/strategy_kit.py`): settings, saved state, resume rule, safe orders, clean stop with reason | Done (M1). Resume changed 2026-11-11 to a user-chosen Start mode (new or old) with no broker check |
 | Stop reason shown on the strategy card; errored strategies wait for Start; restart after a server stop only inside the schedule window, with a notice | Done (M2) |
 | Settings icon and form per strategy, `OPENALGO_STRATEGY_PARAMS`, Clear saved state | Done (M3) |
 | Larger IST clock, shorter summary cards on `/python` | Done (M4) |
@@ -51,8 +51,9 @@ Update this table and the affected page when a milestone lands.
 | Strategy records | `strategies/strategy_configs.json` |
 | Run logs | `log/strategies/<id>_<YYYYMMDD>_<HHMMSS>_IST.log` |
 | Strategy kit | `strategies/lib/strategy_kit.py` (tests: `test/test_strategy_kit.py`) |
+| Strike selection | `strategies/lib/option_strikes.py`, the Node app's rounding for any underlying (tests: `test/test_option_strikes.py`, checked against the original JavaScript) |
 | Saved strategy state | `strategies/state/<STRATEGY_ID>.json` (gitignored) |
-| Example strategies | `strategies/examples/` (`sanity_test.py` uses the kit; `simple_ema_strategy.py` uses the SDK directly) |
+| Example strategies | `strategies/examples/` (`sanity_test.py` and `short_straddle_window.py` use the kit; `simple_ema_strategy.py` uses the SDK directly). `short_straddle_window.py` is the reference for a repeating multi-cycle strategy (tests: `test/test_short_straddle_window.py`) |
 | SDK | the `openalgo` package in the project environment (2.0.5 at the time of writing) |
 | WebSocket proxy | `websocket_proxy/server.py`, `websocket_proxy/broker_factory.py` |
 | Windows desktop keeper | `launcher/keeper.py` |

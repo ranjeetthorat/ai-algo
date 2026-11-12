@@ -150,7 +150,8 @@ acknowledges the stop (`acknowledge_strategy_stop`) and clears the error.
 | Stop pressed on a strategy with a pending restart | Cancels the restart and the notice. |
 
 A restarted strategy is a fresh run from the top of its file. Strategies using
-the kit decide with `s.resume()` whether to continue today's position.
+the kit continue or start fresh according to the Start mode the user set on the
+card (`s.resume()`); a restart after a crash runs with whatever mode is saved.
 
 ## Logs
 

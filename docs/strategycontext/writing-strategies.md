@@ -61,6 +61,7 @@ state, resume rule, order handling and clean stop. The host puts it on
 from strategy_kit import Strategy
 
 PARAMS = {
+    "start_mode": {"type": "choice", "default": "new", "options": ["new", "old"], "label": "Start mode"},
     "lots":    {"type": "int",    "default": 1,  "min": 1, "label": "Lots per leg"},
     "expiry":  {"type": "str",    "default": "09NOV26",    "label": "Expiry (DDMMMYY)"},
     "product": {"type": "choice", "default": "MIS", "options": ["MIS", "NRML"]},
@@ -110,22 +111,31 @@ Strategy(PARAMS).run(main)
   kit; do not edit it.
 - The kit records every filled order, and a pending record before each order
   is sent.
-- `s.resume()`, called once at start:
+- `s.resume()`, called once at start, follows the **Start mode** the user picks
+  on the card. Declare it in `PARAMS` so it appears there:
 
-  | Saved state | Broker | Result |
-  | --- | --- | --- |
-  | none, or from an earlier day | flat in the contracts an old state names | `"fresh"` (old state archived as `<id>.<date>.json`) |
-  | today's, no pending order | net quantities equal | `"continue"` |
-  | a pending order | any | stop: outcome unknown |
-  | today's | any quantity differs | stop, naming the contract |
-  | today's | equal, but Analyze/Live mode changed | stop |
+  ```python
+  "start_mode": {"type": "choice", "default": "new", "options": ["new", "old"],
+                 "label": "Start mode"},
+  ```
 
-- `"continue"` also covers a strategy that already exited today: check
-  `s.open_positions()` (non-zero net quantities from today's fills) or a flag you
-  saved, and return if the work is done.
-- Positions are netted per contract at the broker. A manual trade or another
-  strategy in the same contract makes quantities differ, and the run stops.
-  That is intended.
+  | Start mode | Saved state | Result | Log |
+  | --- | --- | --- | --- |
+  | new | any | `"fresh"`; the old state is renamed to `<id>.set-aside-<time>.json`, never deleted | `Starting in NEW mode: fresh start` |
+  | old | present | `"continue"` with `s.state` exactly as saved, any day | `Starting in OLD mode: continuing the saved state last used on <date>. Open: ...` |
+  | old | none | `"fresh"` | `Starting in OLD mode, but there is no saved state: fresh start.` |
+
+- **The broker is never asked.** With old, the user is responsible for the saved
+  state matching their positions. A leg closed by hand at the broker is still
+  "open" in the saved state, so the strategy will later try to buy it back,
+  which opens a new position. Close by hand, then start with new.
+- With old, an order that was in flight when the last run ended is logged as a
+  WARNING and treated as not filled; a change between Analyze and Live since the
+  saved orders is logged as a WARNING. A switch during the run still stops it.
+- `s.open_positions()` nets the recorded fills per contract. Fills are kept
+  until a new start, so positions carried to another day with old are known.
+  A strategy with a per-day limit resets its own counter on a new day
+  (`short_straddle_window.py` keeps a `day` in its state).
 
 ### Orders
 
@@ -156,6 +166,29 @@ resting LIMIT order that should wait longer than the timeout is not a fit for
   during the exchange session only, stops the run when the heartbeat index has
   been silent, or the link to the platform down, longer than the limits.
   Checked from `s.sleep()`, so keep the main loop on `s.sleep()`.
+
+### Choosing strikes
+
+`strategies/lib/option_strikes.py` picks strikes with the Node app's rounding
+(`getNearestNiftyStrikePrice`), for any underlying:
+
+```python
+from option_strikes import option_strike, option_symbol, strike_step
+
+step = strike_step("NIFTY")                          # 50; BANKNIFTY and SENSEX 100
+ce = option_strike(spot, "CE", offset=1, step=step)  # nearest strike, 1 step up
+pe = option_strike(spot, "PE", offset=1, step=step)  # nearest strike, 1 step down
+symbol = option_symbol("NIFTY", "13NOV26", ce, "CE") # NIFTY13NOV2624600CE
+```
+
+- Paise are dropped, then a remainder of half a step or more rounds up: 24,524
+  gives 24,500 and 24,525 gives 24,550. The platform's `optionsymbol` picks the
+  lower strike at an exact midpoint, so use this module where a strategy must
+  match the Node app.
+- Offset 0 is the nearest strike for both legs; offset N moves a call N steps up
+  and a put N steps down.
+- Check the contract exists before ordering (`s.read(s.client.symbol, ...)`), which
+  also gives its `lotsize`. `short_straddle_window.py` shows the pattern.
 
 ### How a run ends
 
@@ -224,7 +257,7 @@ if __name__ == "__main__":
 | No ticks | Market closed? `client.authenticated`? Same symbol on `/websocket/test` |
 | Card says Running but nothing happens | The process may be stuck rather than ended; check the log. Exits show on the card within 60 s |
 | "Stopped: ..." and it did not start next morning | Intended: an errored strategy waits for Start. Read the reason, then press Start |
-| Sold twice after a restart | The strategy has no resume check; use the kit's `s.resume()` |
+| Sold twice after a restart | Started with new while positions from the last run were open. Use old to continue them |
+| Bought a leg it had already closed by hand | Started with old after closing positions by hand. Close by hand, then start with new |
 | `ModuleNotFoundError: strategy_kit` | The script was run outside the host; start it from `/python`, or set `PYTHONPATH=strategies/lib` |
-| "Saved state does not match the broker" | Positions changed outside the strategy. Handle them at the broker, then use Clear saved state in the card's settings |
 | Settings icon shows "PARAMS must be a plain dictionary" | `PARAMS` uses a variable or function call; write the values out literally |
