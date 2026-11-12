@@ -29,6 +29,30 @@ zip's name comes from it.
   it fails.
 - `--allow-dirty` builds from uncommitted work. Use it for test builds only.
 
+## License gate
+
+Windows desktop builds can be gated against casual redistribution
+(`launcher/license.py`). It is a deterrent, not a strong control: the source
+ships with the app, so a determined user can remove it. It is **never
+destructive** — a blocked license only refuses to start the server; nothing of
+the client's is deleted or changed, and restoring the license lets it start again.
+
+- **Turn it on** by setting `API_KEY` in `launcher/license.py` (or
+  `FASTALGO_LICENSE_API_KEY` in the environment) to the key for the
+  `cbroz.co.in/algo-api` endpoints, before building. Left empty, the gate is
+  **off** and the server starts for everyone.
+- **At install** the installer registers the PC's MAC with `add.php`. An
+  already-registered PC is fine.
+- **At every server start** the keeper checks the MAC with `check.php`:
+  `ok` starts; `not_ok` ("not licensed") and `erase` ("turned off") refuse to
+  start and tell the user to contact support. If the API cannot be reached, the
+  start is refused (contact support / check the connection).
+- **Revoke a client** by setting their entry's `allowed` to `false` in the
+  server's `allowed.json`; **restore** by setting it back to `true`. The next
+  start the client attempts picks up the change. There is no remote wipe, by
+  design.
+- **Server (Ubuntu) installs are not gated.** They are operated by TinyCompute.
+
 ## Publish a release
 
 In this order, so a panel never sees an announcement before its zip exists:
