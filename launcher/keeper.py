@@ -42,7 +42,7 @@ from pathlib import Path
 if __package__ in (None, ""):  # run as a file rather than with -m
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from launcher import envfile
+from launcher import envfile, license
 from launcher.branding import display_name
 
 IS_WINDOWS = sys.platform == "win32"
@@ -488,6 +488,15 @@ class Keeper:
 
     def start_server(self) -> bool:
         """Start the server. False, with the status already reported, when it cannot."""
+        # The desktop license gate. Windows only, and off unless a key is set.
+        # It never touches the user's files: a blocked license only stops the
+        # start (see launcher/license.py).
+        if IS_WINDOWS:
+            allowed, message = license.gate(self.paths.app)
+            if not allowed:
+                self.log("license check blocked the start")
+                self.report("error", message)
+                return False
         ports = server_ports(self.paths)
         deadline = time.monotonic() + self.timing.port_wait
         while True:

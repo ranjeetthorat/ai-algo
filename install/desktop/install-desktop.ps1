@@ -165,6 +165,17 @@ $Python = Join-Path $PythonHome "python.exe"
 $PythonW = Join-Path $PythonHome "pythonw.exe"
 if (-not (Test-Path $PythonW)) { Stop-Install "The Python environment is incomplete. Run the installer again." }
 
+# --- 5b. register this PC's license ----------------------------------------------
+# Standard-library only, so it needs no dependencies. It is off unless the build
+# has a license key, does nothing destructive, and never blocks the install: the
+# check at server start is the gate, and an already-registered PC is fine.
+Say "Registering this PC"
+try {
+    & $Python (Join-Path $App "launcher\license.py") register --remark "$env:COMPUTERNAME / $env:USERNAME" 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+} catch {
+    Write-Host "  Could not register now; $Name will try again when it starts." -ForegroundColor Yellow
+}
+
 # --- 6. firewall -----------------------------------------------------------------
 if (-not $SkipFirewall) {
     Say "Allowing phones and other computers on your home or office network (Windows will ask once)"

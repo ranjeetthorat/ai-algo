@@ -78,6 +78,35 @@ def _alive(pid: int) -> bool:
     return keeper.process_start_time(pid) is not None
 
 
+@pytest.fixture(autouse=True)
+def _fake_license(monkeypatch):
+    """Point the license gate at a local endpoint that always answers "ok".
+
+    This suite tests supervision, not licensing, but some tests spawn a real
+    detached keeper (control.start), which inherits the environment rather than
+    any monkeypatch. An env var both the in-process and the spawned keeper read
+    keeps the gate off the real network while still running its real code; the
+    gate's own behaviour is tested in test_launcher_license.py.
+    """
+    import http.server
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"message": "test", "action": "ok"}')
+
+        def log_message(self, *a):
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", _free_port()), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    monkeypatch.setenv("FASTALGO_LICENSE_URL", f"http://127.0.0.1:{server.server_address[1]}")
+    yield
+    server.shutdown()
+
+
 @pytest.fixture
 def home(tmp_path):
     home = tmp_path / "FastAlgo"
