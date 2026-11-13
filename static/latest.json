@@ -1,8 +1,8 @@
 {
-  "version": "1.5.0",
-  "url": "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/FastAlgo-1.5.0.zip",
-  "sha256": "0fca57d1dccf1144fe44f7ecf8f522da3389223bf34ea0ccf40d8ca645da82d3",
-  "size": 13129530,
+  "version": "1.5.1",
+  "url": "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/FastAlgo-1.5.1.zip",
+  "sha256": "2f1a67df46027c28631b1b64001b8a01dfe971017a19fd8f10f63519ff447de6",
+  "size": 13132340,
   "released": "2026-11-13",
-  "notes": "A license gate for Windows desktop installs: the PC is registered at install and checked before every start, as a deterrent against casual redistribution."
+  "notes": "Fixes for the desktop update check and the license gate: updates are read from a host that resolves, errors read clearly, and a refused start shows in red."
 }
