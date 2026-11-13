@@ -8,6 +8,33 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-13
+
+### Desktop Update and License Fixes
+
+1 commit since 1.5.0. Full notes:
+[version-1.5.1-released.md](releases/version-1.5.1-released.md). No database
+migration, no new setting and no API change.
+
+### Highlights
+
+- The control panel reads the update announcement (`latest.json`) from the Vercel
+  blob store, which resolves, instead of a subdomain that had no DNS record;
+  **Check for updates** now works. This is the first build to distribute.
+- Update errors no longer blame the internet for a server error or a missing
+  manifest.
+- The license check tolerates a BOM or whitespace, reads the whole reply, and
+  reports a server error page as such.
+- A crash or a license-refused start is shown in red in the panel.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - found the update-check and license-gate problems in testing.
+
 ## [1.5.0] - 2026-11-13
 
 ### Desktop License Gate Release
