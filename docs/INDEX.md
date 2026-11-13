@@ -35,6 +35,7 @@ need → drill into the specific file. Don't load everything at once.
 | Ubuntu server install | [installation-guidelines/getting-started/ubuntu-server-installation.md](installation-guidelines/getting-started/ubuntu-server-installation.md) |
 | Windows desktop install, control panel, broker reset | [installation-guidelines/getting-started/windows-desktop-installation.md](installation-guidelines/getting-started/windows-desktop-installation.md) |
 | Upgrade a server install (`install/update.sh`) | [installation-guidelines/getting-started/ubuntu-server-installation.md](installation-guidelines/getting-started/ubuntu-server-installation.md) |
+| Operator fleet runbook (provision, update, switch broker, backups) | [installation-guidelines/getting-started/operator-fleet-runbook.md](installation-guidelines/getting-started/operator-fleet-runbook.md) |
 | Broker integration (36 plugins) | [broker-integration-guide.md](broker-integration-guide.md) |
 | Release notes & changelog | [releases/](releases/) · [CHANGELOG.md](CHANGELOG.md) |
 

@@ -1,0 +1,11 @@
+# OpenAlgo fleet host list for install/update-all.sh
+# One target per line: "user@host", "user@host:port", or "host".
+# Blank lines and lines starting with # are ignored.
+#
+# Copy this to /etc/openalgo/fleet.hosts (or pass --hosts <file>) and list the
+# client servers you operate. The operator machine needs key-based SSH to each,
+# and the remote user must be able to run update.sh with sudo (or be root).
+
+# ubuntu@client-a.example.com
+# ubuntu@client-b.example.com:2222
+# deploy@203.0.113.10
