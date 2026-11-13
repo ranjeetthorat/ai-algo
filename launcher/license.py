@@ -102,21 +102,27 @@ def _request(endpoint: str, params: dict, timeout: float) -> Result:
     request = urllib.request.Request(url, headers={"User-Agent": "FastAlgo-license"})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - https enforced above
-            body = response.read(8192)
+            body = response.read(65536)
             http = response.status
     except urllib.error.HTTPError as e:
         http = e.code
         try:
-            body = e.read(8192)
+            body = e.read(65536)
         except OSError:
             body = b""
     except (urllib.error.URLError, OSError, ValueError):
         return Result("unreachable", "Could not reach the license server.")
+    # Tolerate a BOM and stray whitespace a misconfigured server may prepend.
+    text = body.decode("utf-8-sig", errors="replace").strip()
     try:
-        data = json.loads(body.decode("utf-8"))
+        data = json.loads(text)
         action = str(data["action"])
         message = str(data.get("message", ""))
     except (ValueError, KeyError, TypeError):
+        # Not the JSON we expect. An HTML body is almost always a server error
+        # page (a PHP fatal, a 500, or a host interstitial), not our API.
+        if "<" in text[:200] or "html" in text[:200].lower():
+            return Result("unreachable", "The license server returned an error page, not a reply.", http)
         return Result("unreachable", "The license server gave an unreadable answer.", http)
     if action not in ("ok", "not_ok", "erase"):
         return Result("unreachable", f"The license server gave an unknown answer ({action}).", http)

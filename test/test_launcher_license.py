@@ -185,3 +185,20 @@ def test_keeper_refuses_to_start_when_the_license_is_blocked(monkeypatch, tmp_pa
     assert status["state"] == "error" and status["message"] == "License revoked."
     # Nothing was launched, and nothing of the user's was touched.
     assert keeper.read_json(k.paths.server_pid) is None
+
+
+def test_an_html_error_page_is_reported_as_an_error_page(monkeypatch):
+    # add.php can return a PHP fatal as HTML with HTTP 200; not our JSON.
+    html = "<br />\n<b>Fatal error</b>: Call to undefined function mb_strlen()"
+    monkeypatch.setattr(license.urllib.request, "urlopen", lambda *a, **k: FakeResponse(html))
+    r = license._request("add.php", {"apikey": "k", "mac": "M"}, 5)
+    assert r.action == "unreachable" and "error page" in r.message
+
+
+def test_a_bom_or_whitespace_prefixed_body_still_parses(monkeypatch):
+    monkeypatch.setattr(
+        license.urllib.request,
+        "urlopen",
+        lambda *a, **k: FakeResponse('﻿  {"action": "ok", "message": "hi"}\n'),
+    )
+    assert license._request("check.php", {}, 5).action == "ok"

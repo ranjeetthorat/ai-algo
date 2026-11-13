@@ -217,11 +217,14 @@ def main(argv: list[str] | None = None) -> int:
         manifest = announce(target, url_base(args.url_base), version())
         print(f"latest.json  {manifest['url']}")
         print()
+        from launcher.update import MANIFEST_URL
+
         print("To publish, in this order:")
-        print(f"  1. Upload {target.name} so it is reachable at {manifest['url']}")
-        print("  2. Commit static/latest.json and static/site-config.js")
-        print("  3. Upload the static/ folder to the public site")
-        print("Installed panels offer the update once step 3 is live.")
+        print(f"  1. Upload {target.name} to the blob store, reachable at {manifest['url']}")
+        print(f"  2. Upload release/latest.json to the same store, reachable at {MANIFEST_URL}")
+        print("     (overwrite the existing latest.json; the panel reads this to offer the update)")
+        print("  3. Commit static/latest.json and static/site-config.js, if you serve a website")
+        print("Installed panels offer the update once step 2 is live.")
     return 0
 
 

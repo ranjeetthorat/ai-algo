@@ -212,6 +212,8 @@ class Panel:
         self.state_label.grid(row=0, column=0, columnspan=4, sticky="w")
         self.message_label = ttk.Label(top, wraplength=600)
         self.message_label.grid(row=1, column=0, columnspan=4, sticky="w", pady=(2, 8))
+        # The theme's normal label colour, to restore after a red error line.
+        self._normal_fg = self.state_label.cget("foreground")
         self.buttons = {
             "start": ttk.Button(top, text="Start", command=self.start),
             "stop": ttk.Button(top, text="Stop", command=self.stop),
@@ -611,7 +613,12 @@ class Panel:
         label = STATE_LABELS.get(current, current.title())
         if current == "running" and self.status.get("port"):
             label += f" on port {self.status['port']}"
-        self.state_label.configure(text=label)
+        # A stopped-with-a-problem state (a crash, or a refused start such as a
+        # license that is not valid or has been turned off) is shown in red.
+        danger = current in ("error", "crashed") and not self.busy
+        colour = "#c0392b" if danger else self._normal_fg
+        self.state_label.configure(text=label, foreground=colour)
+        self.message_label.configure(foreground=colour)
         message = self.status.get("message", "")
         if self.status.get("last_error") and current in ("crashed", "restarting"):
             message += f"\nLast error: {self.status['last_error']}"

@@ -58,8 +58,10 @@ from launcher import eject, state
 from launcher.branding import display_name, product_name
 from launcher.keeper import IS_WINDOWS, InstanceLock, Paths, keeper_running, paths_for
 
-#: Where the newest release is announced. ``panel.json`` ``update_url`` overrides it.
-MANIFEST_URL = "https://fastalgo.tinycompute.site/latest.json"
+#: Where the newest release is announced: latest.json on the same Vercel blob
+#: store as the release zip (a stable path that each release overwrites). An
+#: install can point elsewhere with ``update_url`` in ``panel.json``.
+MANIFEST_URL = "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/latest.json"
 
 #: How many ``previous-*`` folders to keep. Each is one version's program files.
 KEEP_PREVIOUS = 1
@@ -171,10 +173,21 @@ def fetch_manifest(url: str, timeout: float = 15.0) -> Manifest:
     try:
         with _open(url, timeout) as response:
             raw = response.read(64 * 1024)
-        return parse_manifest(json.loads(raw.decode("utf-8")))
-    except (OSError, ValueError) as e:
+    except urllib.error.HTTPError as e:
         raise UpdateRefused(
-            "Could not check for updates. Check the internet connection and try again."
+            "The update service did not return any release information. It may not be set up yet; "
+            "contact support."
+        ) from e
+    except (urllib.error.URLError, OSError) as e:
+        raise UpdateRefused(
+            "Could not reach the update service. Check the internet connection and try again, "
+            "or contact support if it continues."
+        ) from e
+    try:
+        return parse_manifest(json.loads(raw.decode("utf-8-sig")))
+    except ValueError as e:
+        raise UpdateRefused(
+            "The update service returned something unexpected. Contact support."
         ) from e
 
 

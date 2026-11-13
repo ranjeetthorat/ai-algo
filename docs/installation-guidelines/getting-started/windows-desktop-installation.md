@@ -57,13 +57,17 @@ the client's is deleted or changed, and restoring the license lets it start agai
 
 In this order, so a panel never sees an announcement before its zip exists:
 
-1. Upload the zip to the folder `latest.json` names (today the Vercel blob store).
-2. Commit `static/latest.json` and `static/site-config.js`.
-3. Upload the `static/` folder to the public site. Installed panels read
-   `https://fastalgo.tinycompute.site/latest.json`, check it when they open and
-   every 6 hours, and show the update from then on.
+1. Upload the zip (`release/FastAlgo-<version>.zip`) to the Vercel blob store.
+2. Upload `release/latest.json` to the same store, overwriting the existing
+   `latest.json`. Installed panels read it from a fixed path
+   (`.../latest.json`), check it when they open and every 6 hours, and show the
+   update from then on.
+3. If you serve a public website, commit `static/latest.json` and
+   `static/site-config.js` and upload `static/` too, for the download button.
 
-`latest.json` holds the version, link, size, SHA-256 and the bold summary line of
+Both files sit on the blob store at a stable host that resolves; the panel's
+`MANIFEST_URL` points there. `latest.json` holds the version, link, size,
+SHA-256 and the bold summary line of
 `docs/releases/version-<version>-released.md`, which the panel shows beside the
 offer. One installation can read a different announcement with
 `"update_url": "https://..."` in its `panel.json`.

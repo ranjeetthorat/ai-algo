@@ -236,3 +236,28 @@ def test_a_refused_update_shows_its_own_message(install, tk_root, monkeypatch):
     window.run_update()
     _drain_until_idle(window, tk_root)
     assert shown == ["The download was damaged, so it was not used."]
+
+
+def test_an_error_state_is_shown_in_red(install, tk_root, monkeypatch):
+    monkeypatch.setattr(
+        panel.control,
+        "status",
+        lambda paths: {
+            "state": "error",
+            "message": "This copy of FastAlgo is not licensed. Contact support.",
+            "supervised": False,
+        },
+    )
+    window = panel.Panel(tk_root, install)
+    assert str(window.state_label.cget("foreground")) == "#c0392b"
+    assert str(window.message_label.cget("foreground")) == "#c0392b"
+
+
+def test_a_normal_state_is_not_red(install, tk_root, monkeypatch):
+    monkeypatch.setattr(
+        panel.control,
+        "status",
+        lambda paths: {"state": "stopped", "message": "FastAlgo is stopped.", "supervised": False},
+    )
+    window = panel.Panel(tk_root, install)
+    assert str(window.state_label.cget("foreground")) != "#c0392b"

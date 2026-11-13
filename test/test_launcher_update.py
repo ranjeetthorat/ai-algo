@@ -445,3 +445,19 @@ def test_release_summary_is_the_bold_opening_line(build_release):
     summary = build_release.release_summary("1.2.0")
     assert summary.startswith("Desktop release:")
     assert build_release.release_summary("0.0.0") == ""
+
+
+def test_a_missing_manifest_is_not_blamed_on_the_internet(install, monkeypatch):
+    import urllib.error
+
+    def not_found(url, timeout):
+        raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+
+    monkeypatch.setattr(update, "_open", not_found)
+    with pytest.raises(update.UpdateRefused, match="release information"):
+        update.check(install)
+    # A 404 must not claim the internet is down.
+    try:
+        update.check(install)
+    except update.UpdateRefused as e:
+        assert "internet" not in str(e).lower()
