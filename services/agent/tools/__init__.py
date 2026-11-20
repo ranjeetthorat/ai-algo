@@ -396,6 +396,23 @@ TOOLKITS: list[ToolkitSpec] = [
         description="Symbol search, contract lookup and expiry dates.",
     ),
     ToolkitSpec(
+        key="docs",
+        module="services.agent.tools.docs",
+        attr="DocsToolkit",
+        # Chat only, like the generators. Grounding a how-to answer and reading a
+        # reference before writing a strategy or a flow are conversation-page
+        # jobs; the chart panel delegates non-chart work to chat, and the spoken
+        # surface stays a narrowing of chat that widens nothing. A surface is
+        # never taught a tool it does not have, so DOCS_SECTION and
+        # STRATEGY_BUILD_SECTION are chat-only prompt sections to match.
+        surfaces=CHAT_ONLY,
+        order=15,
+        description=(
+            "Search and read the FastAlgo documentation under docs/, to ground a "
+            "how-to answer or to read the real reference before generating code."
+        ),
+    ),
+    ToolkitSpec(
         key="indicators",
         module="services.agent.tools.indicators",
         attr="IndicatorsToolkit",

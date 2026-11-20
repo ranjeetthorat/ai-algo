@@ -137,10 +137,16 @@ DEFAULT_NUM_HISTORY_RUNS = 8
 #: characters before that section and is 27676 after it, so 28000 left 324
 #: characters of headroom. That is less than one bullet, and the failure mode is
 #: not a truncated bullet, it is a **different** whole section disappearing with
-#: only a log line. 30000 restores about two thousand characters of room. The
-#: cap is a ceiling and not a target, so raising it costs nothing until a
-#: section actually grows into it.
-DEFAULT_MAX_PROMPT_CHARS = 30000
+#: only a log line. 30000 restored about two thousand characters of room.
+#:
+#: Raised again from 30000 to 33000 when the docs-grounding section and the
+#: hosted-strategy build section joined the chat surface. Both are chat-only, so
+#: chat is the only surface that grew: measured at 30997 characters at its
+#: largest, which 30000 would have overshot by about a thousand, deleting a whole
+#: section with only a log line. Voice and chart sit near 21000 and are nowhere
+#: close. The cap is a ceiling and not a target, so raising it costs nothing
+#: until a section actually grows into it.
+DEFAULT_MAX_PROMPT_CHARS = 33000
 
 #: The operator's timezone. Indian markets, and every schedule in this platform,
 #: run on IST. This is not configuration, it is what the exchanges do.
