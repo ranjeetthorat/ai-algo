@@ -8,6 +8,40 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-20
+
+### AI Tools over MCP Release
+
+7 commits since 1.6.0. Full notes:
+[version-1.7.0-released.md](releases/version-1.7.0-released.md). No database
+migration and no API change.
+
+### Highlights
+
+- Connect your own AI (Claude Desktop, ChatGPT, Cursor, VS Code, Antigravity) to
+  FastAlgo over MCP with one copy-paste, from a new Connect AI page - no provider
+  API key to manage.
+- The AI answers how-to questions from the installed documentation (`search_docs`
+  / `get_doc`), confirms the link (`check_connection`), and builds
+  platform-compatible strategies that ask before assuming and use the strategy kit
+  (`get_strategy_guide`). The in-app assistant at `/agent` is grounded the same way
+  and replies in English, Hindi or Marathi.
+- The MCP transport accepts a FastAlgo API key as the bearer, scope-limited to
+  reading and authoring strategies (no order placement unless the operator enables
+  it).
+- A configurable install location lets a server live under a home directory, with
+  the ops scripts following it.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - directed the AI-tools design (own-AI-over-MCP for non-tech
+  clients, copy-paste connection, read-only default scope) and specified the
+  configurable install location.
+
 ## [1.6.0] - 2026-11-20
 
 ### Linux Fleet Operations and Connection Alarm Release
