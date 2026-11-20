@@ -76,6 +76,34 @@ _DISPATCH_RATE_LIMIT = "120 per minute"
 _SSE_RATE_LIMIT = "5 per minute"
 
 
+# API-key bearer auth. A FastAlgo API key pasted as the bearer token is the
+# simple, copy-paste way to connect a desktop or IDE MCP client, with no OAuth
+# browser flow: the client config carries the URL and the key, nothing else. It
+# grants a fixed, configurable scope set (read + docs + strategy by default, and
+# never order placement unless the operator widens it), so it is strictly less
+# powerful than the same key already is on /api/v1/ and adds no new reach. OAuth
+# access tokens still work and are tried first; set MCP_APIKEY_AUTH_ENABLED=false
+# to force OAuth only.
+def _apikey_auth_enabled() -> bool:
+    return os.getenv("MCP_APIKEY_AUTH_ENABLED", "true").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def _apikey_scopes() -> str:
+    """Space-separated scopes granted to an API-key bearer.
+
+    Default is read + docs + strategy and no ``write:orders``: a client's AI can
+    read the account and market, ground answers in the docs and author strategies,
+    but cannot place an order. An operator who wants order placement over MCP adds
+    ``write:orders`` here, deliberately.
+    """
+    return os.getenv("MCP_APIKEY_SCOPES", "read:market read:account").strip()
+
+
 # CORS allowlist — read at module load. Empty list means no Origin is
 # advertised back; hosted clients (claude.ai, chatgpt.com) need to be
 # in this list for browser-side OAuth flows to work.
@@ -156,9 +184,7 @@ def _apply_cors(response: Response, origin: str | None) -> Response:
         # Browser-side OAuth clients need to read the discovery hint
         # from the 401 response. Without this header the WWW-Authenticate
         # value is hidden by CORS and the client reports "no OAuth".
-        response.headers["Access-Control-Expose-Headers"] = (
-            "WWW-Authenticate, Link, Content-Type"
-        )
+        response.headers["Access-Control-Expose-Headers"] = "WWW-Authenticate, Link, Content-Type"
         response.headers["Access-Control-Max-Age"] = "600"
         response.headers["Vary"] = "Origin"
     return response
@@ -181,17 +207,27 @@ _AUDIT_MAX_LINES = 5000
 # the JTI claim once verified, so a noisy client on one IP can't
 # starve other clients on the same NAT.
 def _rate_limit_key() -> str:
-    """Use the JWT jti as the rate-limit key when available, else the IP."""
+    """Rate-limit key: the JWT jti for an OAuth token, else a hash of the bearer.
+
+    An OAuth caller is keyed by its token's jti. An API-key bearer (or any other
+    opaque token) is keyed by a cheap hash of the presented value - no
+    verification, so the key is computed even for an invalid token and a single
+    token cannot exceed its quota by hopping IPs. Falls back to the IP when there
+    is no bearer at all.
+    """
     auth_header = request.headers.get("Authorization", "")
     if auth_header.lower().startswith("bearer "):
-        token = auth_header.split(None, 1)[1].strip()
-        try:
-            claims = verify_access_token(token)
-            jti = claims.get("jti")
-            if jti:
-                return f"jti:{jti}"
-        except Exception:
-            pass
+        parts = auth_header.split(None, 1)
+        token = parts[1].strip() if len(parts) == 2 else ""
+        if token:
+            try:
+                claims = verify_access_token(token)
+                jti = claims.get("jti")
+                if jti:
+                    return f"jti:{jti}"
+            except Exception:
+                pass
+            return f"key:{hashlib.sha256(token.encode()).hexdigest()[:16]}"
     return request.remote_addr or "unknown"
 
 
@@ -312,6 +348,45 @@ def _bearer_or_none() -> str | None:
         return None
     token = parts[1].strip()
     return token or None
+
+
+def _authenticate(token_str: str) -> dict[str, Any]:
+    """Authenticate a bearer token: an OAuth access token, or a FastAlgo API key.
+
+    The OAuth JWT is tried first, so existing OAuth clients are unaffected. When
+    the value is not a valid access token and API-key auth is enabled, it is
+    verified as a FastAlgo API key (Argon2, the same check /api/v1/ uses, which
+    never logs the plaintext); a valid key yields a synthesized claims dict
+    carrying the configured API-key scopes. The key itself never enters the claims
+    or the audit trail - only a short hash of it, used to key rate limiting.
+
+    Args:
+        token_str: The bearer token from the Authorization header.
+
+    Returns:
+        A claims dict with ``scope``, ``client_id`` and ``jti``.
+
+    Raises:
+        AccessTokenError: When neither path accepts the token.
+    """
+    try:
+        return verify_access_token(token_str)
+    except AccessTokenError:
+        if not _apikey_auth_enabled():
+            raise
+
+    from database.auth_db import verify_api_key
+
+    if not verify_api_key(token_str):
+        raise AccessTokenError("invalid_token")
+
+    digest = hashlib.sha256(token_str.encode()).hexdigest()[:16]
+    return {
+        "scope": _apikey_scopes(),
+        "client_id": "api_key",
+        "jti": f"apikey:{digest}",
+        "auth": "api_key",
+    }
 
 
 def _resource_metadata_url() -> str:
@@ -436,9 +511,9 @@ def mcp_dispatch():
     if not token_str:
         return _unauthorized("invalid_token", "Missing Bearer token.")
     try:
-        claims = verify_access_token(token_str)
+        claims = _authenticate(token_str)
     except AccessTokenError as e:
-        return _unauthorized(str(e), "")
+        return _unauthorized(str(e) or "invalid_token", "")
 
     granted_scopes = (claims.get("scope") or "").split()
     client_id = claims.get("client_id") or "unknown"
@@ -607,9 +682,7 @@ def _dispatch_tool_call(
         # Don't leak the required scope value back to the client beyond
         # the WWW-Authenticate challenge — fold it into the JSON-RPC
         # error data block for clients that look there.
-        return _jsonrpc_error(
-            rpc_id, -32000, "insufficient_scope", data={"required_scope": needed}
-        )
+        return _jsonrpc_error(rpc_id, -32000, "insufficient_scope", data={"required_scope": needed})
 
     fn = get_tool_callable(tool_name)
     if fn is None:
@@ -644,17 +717,16 @@ def _dispatch_tool_call(
 
     started = time.perf_counter()
     outcome = "success"
-    error_detail: str | None = None
     try:
         result_text = fn(**arguments)  # tools accept kwargs only
-    except TypeError as e:
+    except TypeError:
         outcome = "bad_arguments"
-        error_detail = str(e)[:300]
         result_text = None
     except Exception as e:
-        # Any tool-internal failure is logged but not leaked verbatim.
+        # Any tool-internal failure is logged but not leaked verbatim. The full
+        # detail reaches log/errors.jsonl via logger.exception; only a coarse
+        # outcome category is returned to the client.
         outcome = "error"
-        error_detail = str(e)[:300]
         logger.exception(f"[MCP tool] {tool_name} raised: {e}")
         result_text = None
     duration_ms = int((time.perf_counter() - started) * 1000)
@@ -674,11 +746,11 @@ def _dispatch_tool_call(
     )
 
     if outcome != "success":
-        # Do NOT echo error_detail back to the client — it can carry SQL
+        # Do NOT echo the error detail back to the client — it can carry SQL
         # error messages, internal paths, or function-signature reveals
-        # (security review finding H-4). The full detail is in the
-        # audit log + log/errors.jsonl for the admin to triage. We
-        # surface only a coarse outcome category to the client.
+        # (security review finding H-4). The full detail is in
+        # log/errors.jsonl for the admin to triage. We surface only a coarse
+        # outcome category to the client.
         client_message = {
             "bad_arguments": "Invalid arguments. Check the tool schema.",
             "error": "Tool execution failed. See server audit log.",
@@ -714,9 +786,9 @@ def mcp_sse():
     if not token_str:
         return _unauthorized("invalid_token", "Missing Bearer token.")
     try:
-        verify_access_token(token_str)
+        _authenticate(token_str)
     except AccessTokenError as e:
-        return _unauthorized(str(e), "")
+        return _unauthorized(str(e) or "invalid_token", "")
 
     def gen():
         # Initial comment so the client knows the stream is live.

@@ -424,6 +424,16 @@ def create_app():
             logger.warning(
                 "[MCP] write:orders scope is ENABLED — MCP clients can place real orders."
             )
+        if os.getenv("MCP_APIKEY_AUTH_ENABLED", "true").lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        ) and "write:orders" in os.getenv("MCP_APIKEY_SCOPES", "read:market read:account"):
+            logger.warning(
+                "[MCP] API-key bearer auth grants write:orders — a pasted API key can "
+                "place real orders. Narrow MCP_APIKEY_SCOPES to remove it."
+            )
         if os.getenv("MCP_OAUTH_REQUIRE_APPROVAL", "False").lower() != "true":
             logger.warning(
                 "[MCP] DCR auto-approval is ENABLED — any DCR registration "
