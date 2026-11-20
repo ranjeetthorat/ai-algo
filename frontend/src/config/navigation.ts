@@ -20,6 +20,7 @@ import {
   type LucideIcon,
   MessageCircle,
   MessageSquare,
+  Plug,
   Search,
   Settings,
   TrendingUp,
@@ -78,6 +79,7 @@ export const profileMenuItems: NavItem[] = [
   // so a configured /agent still has a route back to its settings without this
   // menu holding one.
   { href: '/agent', label: 'Agent', icon: Bot },
+  { href: '/connect-ai', label: 'Connect AI', icon: Plug },
   { href: '/master-contract', label: 'Master Contract', icon: FileStack },
   { href: '/telegram', label: 'Telegram Bot', icon: MessageSquare },
   { href: '/whatsapp', label: 'WhatsApp Bot', icon: MessageCircle },

@@ -40,6 +40,7 @@ const Holdings = lazy(() => import('@/pages/Holdings'))
 const Token = lazy(() => import('@/pages/Token'))
 const Search = lazy(() => import('@/pages/Search'))
 const ApiKey = lazy(() => import('@/pages/ApiKey'))
+const ConnectAI = lazy(() => import('@/pages/ConnectAI'))
 const AgentIndex = lazy(() => import('@/pages/agent/AgentIndex'))
 const AgentConfig = lazy(() => import('@/pages/agent/AgentConfig'))
 const Profile = lazy(() => import('@/pages/Profile'))
@@ -197,6 +198,8 @@ function App() {
                 <Route path="/search" element={<Search />} />
                 {/* API Key management */}
                 <Route path="/apikey" element={<ApiKey />} />
+                {/* Connect an external AI (MCP) */}
+                <Route path="/connect-ai" element={<ConnectAI />} />
                 {/* Phase 4: Charts & Webhook Configuration */}
                 <Route path="/platforms" element={<Platforms />} />
                 <Route path="/tradingview" element={<TradingView />} />

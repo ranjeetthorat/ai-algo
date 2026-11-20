@@ -413,6 +413,14 @@ def react_agent_config():
     return serve_react_app()
 
 
+# Connect your AI (external MCP client setup). Registered for the same
+# Error404Tracker reason as the routes above. The page's data comes from the
+# JSON route /connect-ai/config in blueprints/apikey.py.
+@react_bp.route("/connect-ai", strict_slashes=False)
+def react_connect_ai():
+    return serve_react_app()
+
+
 # Strategy Builder - multi-leg option strategy builder with payoff diagram
 @react_bp.route("/strategybuilder", strict_slashes=False)
 def react_strategybuilder():

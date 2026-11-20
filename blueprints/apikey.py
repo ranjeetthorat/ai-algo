@@ -129,3 +129,46 @@ def update_api_key_mode():
     except Exception as e:
         logger.exception(f"Error updating order mode: {e}")
         return jsonify({"error": "An error occurred while updating order mode"}), 500
+
+
+def _mcp_apikey_auth_enabled() -> bool:
+    """Whether a pasted API key is accepted as the MCP bearer (mirrors mcp_http)."""
+    return os.getenv("MCP_APIKEY_AUTH_ENABLED", "true").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+@api_key_bp.route("/connect-ai/config", methods=["GET"])
+@check_session_validity
+def connect_ai_config():
+    """Everything the 'Connect your AI' page needs to render the config block.
+
+    Reports whether the remote MCP transport is enabled, the MCP URL a client
+    points at (the configured public URL, or the current origin for a desktop /
+    localhost install), whether a pasted API key is accepted as the bearer, and
+    the user's API key to put in the block. The key is returned exactly as the
+    /apikey page returns it, to the same session-authenticated user.
+    """
+    login_username = session["user"]
+    api_key = get_api_key_for_tradingview(login_username)
+
+    mcp_enabled = os.getenv("MCP_HTTP_ENABLED", "False").strip().lower() == "true"
+    public_url = (os.getenv("MCP_PUBLIC_URL") or "").strip().rstrip("/")
+    base = public_url or request.url_root.rstrip("/")
+    mcp_url = f"{base}/mcp"
+
+    scopes = os.getenv("MCP_APIKEY_SCOPES", "read:market read:account")
+
+    return jsonify(
+        {
+            "mcp_enabled": mcp_enabled,
+            "apikey_auth_enabled": _mcp_apikey_auth_enabled(),
+            "mcp_url": mcp_url,
+            "has_api_key": api_key is not None,
+            "api_key": api_key,
+            "orders_enabled": "write:orders" in scopes,
+        }
+    )
