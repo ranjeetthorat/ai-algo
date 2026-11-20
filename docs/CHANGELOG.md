@@ -8,6 +8,34 @@ fix, live in [docs/releases](releases/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-20
+
+### Linux Fleet Operations and Connection Alarm Release
+
+3 commits since 1.5.1. Full notes:
+[version-1.6.0-released.md](releases/version-1.6.0-released.md). No database
+migration and no API change.
+
+### Highlights
+
+- A broker-connection alarm raises a banner and a repeating alarm sound when the
+  live feed drops (or this device loses the server), escalating from a quiet
+  "reconnecting" notice to a red alarm, and auto-clearing on recovery. Shared by
+  the desktop build and Linux servers.
+- A Linux broker-switch reset moves a client's server to a different broker in one
+  step, keeping their login and saved work and backing up first.
+- Operator tooling for hosted servers: a fleet-wide update rollout, per-instance
+  scheduled backups with retention, and a provisioning/operations runbook.
+
+### Dependencies
+
+No dependencies changed.
+
+### Contributors
+
+- **@ranjeetthorat** - specified and tested the connection alarm and the Linux
+  fleet-operations kit, and directed the keep-login broker reset.
+
 ## [1.5.1] - 2026-11-13
 
 ### Desktop Update and License Fixes
