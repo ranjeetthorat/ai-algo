@@ -7,9 +7,19 @@ with async_mode="threading" and avoids greenlet errors under eventlet.
 """
 
 from extensions import socketio
+from utils import real_threading
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Last known broker-feed status per (broker, user), so a browser that loads
+# *during* an outage can learn the current state on connect instead of waiting
+# for the next transition. Keyed small (one user per deployment). The subscriber
+# runs on the EventBus pool (green under eventlet) and the query handler runs in
+# the SocketIO handler context, so the lock is a real one (utils/real_threading)
+# and guards only the in-memory dict, per the eventlet cross-thread invariant.
+_feed_status_lock = real_threading.Lock()
+_last_feed_status: dict[tuple[str, str], dict] = {}
 
 
 def on_order_placed(event):
@@ -273,6 +283,40 @@ def _emit_analyzer_update(event):
         "analyzer_update",
         {"request": event.request_data, "response": event.response_data},
     )
+
+
+# --- broker feed connection status ----------------------------------------
+
+
+def on_broker_feed_status(event):
+    """Emit broker_feed_status and remember it for clients that connect later.
+
+    Global emit, matching every other event here (single user per deployment).
+    """
+    payload = {
+        "status": event.status,
+        "broker": event.broker,
+        "attempt": event.attempt,
+        "message": event.message,
+    }
+    with _feed_status_lock:
+        _last_feed_status[(event.broker, event.user_id)] = payload
+    socketio.emit("broker_feed_status", payload)
+
+
+def on_broker_feed_status_query(data=None):
+    """A newly connected browser asks for the current feed status; re-send the
+    last known one so a page loaded during an outage shows the alarm too."""
+    with _feed_status_lock:
+        snapshot = list(_last_feed_status.values())
+    for payload in snapshot:
+        socketio.emit("broker_feed_status", payload)
+
+
+def register_socket_handlers():
+    """Wire client->server SocketIO handlers (default namespace). Called once at
+    startup from subscribers.register_all()."""
+    socketio.on_event("broker_feed_status_query", on_broker_feed_status_query)
 
 
 # --- GTT ------------------------------------------------------------------

@@ -202,6 +202,10 @@ class BaseOrderUpdateAdapter(ABC):
                     "the broker rejected the stored token. It reconnects on the "
                     "next broker login."
                 )
+                self._report_feed_status(
+                    "down",
+                    message="Broker session expired. Log in again to restore live updates.",
+                )
                 break
             delay = _RECONNECT_BACKOFFS[min(attempt, len(_RECONNECT_BACKOFFS) - 1)]
             attempt += 1
@@ -209,6 +213,7 @@ class BaseOrderUpdateAdapter(ABC):
                 f"Order-update reconnect attempt {attempt} in {delay}s "
                 f"({self.broker_name}/{self.user_id})"
             )
+            self._report_feed_status("reconnecting", attempt=attempt)
             slept = 0.0
             while slept < delay and not self._shutting_down:
                 time.sleep(0.2)
@@ -229,6 +234,7 @@ class BaseOrderUpdateAdapter(ABC):
             self.logger.info(
                 f"Order-update WS connected: {self.broker_name}/{self.user_id}"
             )
+            self._report_feed_status("connected")
             self.on_open_extra(ws)
             interval = self.heartbeat_interval()
             if interval:
@@ -330,6 +336,29 @@ class BaseOrderUpdateAdapter(ABC):
             bus.publish(OrderUpdateEvent(**fields))
         except Exception:
             self.logger.exception("Failed to publish OrderUpdateEvent")
+
+    def _report_feed_status(self, status: str, attempt: int = 0, message: str = "") -> None:
+        """Publish a broker-feed connection-status change for the UI's alarm.
+
+        Best-effort and never raised: a status notification is an enhancement,
+        not part of the order path. Goes through the same EventBus ->
+        socketio_subscriber path as order updates, which is eventlet-safe under
+        async_mode="threading".
+        """
+        try:
+            from events import BrokerFeedStatusEvent
+
+            bus.publish(
+                BrokerFeedStatusEvent(
+                    status=status,
+                    broker=self.broker_name,
+                    user_id=self.user_id,
+                    attempt=attempt,
+                    message=message,
+                )
+            )
+        except Exception:
+            self.logger.debug("Failed to publish BrokerFeedStatusEvent", exc_info=True)
 
 
 class PollingOrderUpdateAdapter:

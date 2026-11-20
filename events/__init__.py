@@ -32,6 +32,7 @@ from events.sandbox_events import (
     SandboxOrderFilledEvent,
     SandboxT1SettlementEvent,
 )
+from events.system_events import BrokerFeedStatusEvent
 
 __all__ = [
     "OrderEvent",
@@ -53,6 +54,7 @@ __all__ = [
     "SandboxOrderFilledEvent",
     "SandboxAutoSquareOffEvent",
     "SandboxT1SettlementEvent",
+    "BrokerFeedStatusEvent",
     "GTTPlacedEvent",
     "GTTFailedEvent",
     "GTTModifiedEvent",

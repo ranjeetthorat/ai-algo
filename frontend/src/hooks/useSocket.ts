@@ -4,6 +4,7 @@ import { io, type Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { type AlertCategories, useAlertStore } from '@/stores/alertStore'
 import { useAuthStore } from '@/stores/authStore'
+import { type BrokerStatus, useConnectionStore } from '@/stores/connectionStore'
 import { useSessionStore } from '@/stores/sessionStore'
 
 // Audio throttling configuration
@@ -159,6 +160,23 @@ export function useSocket() {
 
     const socket = socketRef.current
     setSocketInstance(socket)
+
+    // Connection health for the global ConnectionAlarm. On a server deployment,
+    // 'disconnect' means this device lost its own internet; on desktop the
+    // server is local so this stays connected and the broker_feed_status event
+    // below is what signals a dropped broker link. On (re)connect, ask the
+    // server for the current broker status so a page opened during an outage
+    // still shows the alarm.
+    socket.on('connect', () => {
+      useConnectionStore.getState().setServerConnected(true)
+      socket.emit('broker_feed_status_query')
+    })
+    socket.on('disconnect', () => {
+      useConnectionStore.getState().setServerConnected(false)
+    })
+    socket.on('broker_feed_status', (data: { status: BrokerStatus; message?: string }) => {
+      useConnectionStore.getState().setBrokerStatus(data.status, data.message)
+    })
 
     // Force logout from another device
     socket.on('force_logout', (data: { message: string }) => {

@@ -1,10 +1,12 @@
 import { createContext, type ReactNode, useContext } from 'react'
 import type { Socket } from 'socket.io-client'
+import { ConnectionAlarm } from '@/components/connection/ConnectionAlarm'
 import { useSocket } from '@/hooks/useSocket'
+import type { AlertCategories } from '@/stores/alertStore'
 import { useAuthStore } from '@/stores/authStore'
 
 interface SocketContextType {
-  playAlertSound: () => void
+  playAlertSound: (category?: keyof AlertCategories) => void
   // The single app-wide Socket.IO connection — shared so event hooks
   // (useOrderEventRefresh) reuse it instead of each opening a new one.
   socket: Socket | null
@@ -36,6 +38,9 @@ export function SocketProvider({ children }: SocketProviderProps) {
   }
 
   return (
-    <SocketContext.Provider value={{ playAlertSound, socket }}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={{ playAlertSound, socket }}>
+      <ConnectionAlarm />
+      {children}
+    </SocketContext.Provider>
   )
 }

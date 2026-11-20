@@ -153,4 +153,18 @@ def register_all():
         "socketio:sandbox_t1_settlement",
     )
 
+    # --- broker.feed_status (connection alarm; socketio only) ---
+    # Published by the order-update adapter lifecycle. Only the socketio
+    # subscriber is wired: it drives the UI's connection alarm and is not an
+    # order event to log, relay or send to Telegram.
+    bus.subscribe(
+        "broker.feed_status",
+        socketio_subscriber.on_broker_feed_status,
+        "socketio:broker_feed_status",
+    )
+
+    # Client->server handler so a browser can ask for the current feed status
+    # when it connects (page loaded during an outage).
+    socketio_subscriber.register_socket_handlers()
+
     logger.debug("EventBus: all subscribers registered")
