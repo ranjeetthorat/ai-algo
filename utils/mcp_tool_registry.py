@@ -30,7 +30,7 @@ Drift check:
 
 from __future__ import annotations
 
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 from utils.logging import get_logger
 
@@ -114,6 +114,14 @@ TOOL_SCOPES: dict[str, str] = {
     # check uniform without inventing a fourth scope.
     "get_openalgo_version": SCOPE_READ_MARKET,
     "validate_order_constants": SCOPE_READ_MARKET,
+    "check_connection": SCOPE_READ_MARKET,
+    # ---- Documentation grounding (reads docs/, no account or market data) ----
+    # Read-only and harmless, filed under read:market like the other info
+    # tools so the three-scope model stays intact. This is what lets an
+    # external AI explain the framework and read the real strategy-kit and
+    # Flow references before it generates a file.
+    "search_docs": SCOPE_READ_MARKET,
+    "get_doc": SCOPE_READ_MARKET,
 }
 
 
@@ -197,7 +205,7 @@ def _load_mcpserver_module():
     module = importlib.util.module_from_spec(spec)
     sys.modules["openalgo_mcp_server"] = module  # so its decorators bind
     spec.loader.exec_module(module)
-    setattr(_load_mcpserver_module, "_module", module)
+    _load_mcpserver_module._module = module
     return module
 
 

@@ -404,6 +404,14 @@ Exchange open/close epoch timestamps for a given date (date optional → default
 
 ## Utilities
 
+### `check_connection`
+
+Confirm the whole chain end to end right after setup: that your AI reached the FastAlgo MCP server and that the configured API key authenticates. Reports the OpenAlgo version, how many tools are available, the active toolsets, and the account's analyzer mode when the key is valid. Ask this first.
+
+**Prompt:** *"Are you connected to FastAlgo?"*
+
+---
+
 ### `get_openalgo_version`
 
 **Prompt:** *"What version of the openalgo library is running?"*
@@ -423,6 +431,26 @@ Push a Telegram notification via the OpenAlgo Telegram bot (must be configured i
 **Prompts:**
 - *"Send me a Telegram alert: NIFTY crossed 26000, priority 8"*
 - *"Ping me on Telegram if my NIFTY CE fills"*
+
+---
+
+## Documentation
+
+These tools read FastAlgo's own documentation so the model can answer "how do I…" questions and read the real strategy-kit, SDK and Flow references from the installed version instead of from memory. Read-only; they reach `docs/` and never the broker.
+
+### `search_docs`
+
+Search the documentation and return the best-matching pages, each with a short snippet. Topic words rank better than a full sentence.
+
+**Prompt:** *"How do I write a Python strategy that takes settings?"*
+
+---
+
+### `get_doc`
+
+Read one documentation file by the `path` a search returned, or `INDEX.md` for the map of the whole set. Pass an optional `section` to read just one part of a long reference.
+
+**Prompt:** *"Open the strategy writing guide and summarise the kit's order helper"*
 
 ---
 
