@@ -744,11 +744,19 @@ else
 fi
 log_message "Update Log: $LOG_FILE" "$BLUE"
 
+# Refresh the 'fastalgo' operator command from the just-updated repo, so existing
+# installs that predate it pick it up on their next update.
+if [ "$SERVER_MODE" = true ] && [ -f "$OPENALGO_PATH/install/fastalgo-ctl.sh" ]; then
+    sudo install -m 755 "$OPENALGO_PATH/install/fastalgo-ctl.sh" /usr/local/bin/fastalgo 2>/dev/null \
+        && log_message "Refreshed the 'fastalgo' command." "$GREEN"
+fi
+
 if [ "$SERVER_MODE" = true ]; then
-    log_message "\nUseful Commands:" "$YELLOW"
-    log_message "  Check status:  sudo systemctl status $SERVICE_NAME" "$BLUE"
-    log_message "  View logs:     sudo journalctl -u $SERVICE_NAME -n 50" "$BLUE"
-    log_message "  Restart:       sudo systemctl restart $SERVICE_NAME" "$BLUE"
+    log_message "\nUseful Commands (or just use 'fastalgo'):" "$YELLOW"
+    log_message "  Status:        fastalgo status" "$BLUE"
+    log_message "  Live logs:     fastalgo logs" "$BLUE"
+    log_message "  Restart:       fastalgo restart" "$BLUE"
+    log_message "  All commands:  fastalgo help" "$BLUE"
 else
     log_message "\nNext Steps:" "$YELLOW"
     log_message "  Start application: uv run app.py" "$BLUE"

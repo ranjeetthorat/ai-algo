@@ -177,86 +177,107 @@ handle_existing() {
     return 0
 }
 
-# Function to check and configure swap memory
+# Set swappiness to 10 (favour RAM over swap), persisting the setting exactly once.
+# Re-running the installer must not keep appending the same line to sysctl.conf.
+apply_swappiness() {
+    sudo sysctl -q vm.swappiness=10 2>/dev/null || true
+    if ! grep -q '^vm.swappiness=' /etc/sysctl.conf; then
+        echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf > /dev/null
+        log_message "Swappiness set to 10 for better performance" "$GREEN"
+    fi
+}
+
+# Function to check and configure swap memory.
+#
+# Idempotent and safe to re-run (the installer and change-broker/update flows all
+# reach this). Two things the first version got wrong, both of which stopped a
+# re-run dead on a small box:
+#   - A correctly created 3G swap file reports ~3071MB via `free -m`, not a round
+#     3072, so an exact ">= 3072" test saw 3071 < 3072 and tried to rebuild swap
+#     on every run. We treat anything at or above SWAP_MIN_MB as enough.
+#   - Rebuilding wrote over /swapfile in place while it was swapped on, which
+#     fails with "fallocate: Text file busy". We swapoff and remove it first.
 check_and_configure_swap() {
-    # Get total RAM in MB
+    local SWAP_TARGET_MB=3072   # size we create when swap is short
+    local SWAP_MIN_MB=2048      # at or above this, existing swap is treated as enough
+
     TOTAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     TOTAL_RAM_MB=$((TOTAL_RAM_KB / 1024))
     TOTAL_RAM_GB=$((TOTAL_RAM_MB / 1024))
-    
+
     log_message "System RAM: ${TOTAL_RAM_MB}MB (${TOTAL_RAM_GB}GB)" "$BLUE"
-    
-    # Check if RAM is less than 2GB
-    if [ $TOTAL_RAM_MB -lt 2048 ]; then
-        log_message "System has less than 2GB RAM. Checking swap configuration..." "$YELLOW"
-        
-        # Check current swap
-        SWAP_TOTAL=$(free -m | grep Swap | awk '{print $2}')
-        log_message "Current swap: ${SWAP_TOTAL}MB" "$BLUE"
-        
-        if [ $SWAP_TOTAL -lt 3072 ]; then
-            log_message "Insufficient swap memory. Creating 3GB swap file..." "$YELLOW"
-            
-            # Check available disk space
-            AVAILABLE_SPACE=$(df / | tail -1 | awk '{print $4}')
-            REQUIRED_SPACE=3145728  # 3GB in KB
-            
-            if [ $AVAILABLE_SPACE -lt $REQUIRED_SPACE ]; then
-                log_message "Error: Not enough disk space for swap file" "$RED"
-                log_message "Available: ${AVAILABLE_SPACE}KB, Required: ${REQUIRED_SPACE}KB" "$RED"
-                exit 1
-            fi
-            
-            # Create swap file
-            log_message "Creating 3GB swap file at /swapfile..." "$BLUE"
-            sudo fallocate -l 3G /swapfile
-            if [ $? -ne 0 ]; then
-                # Fallback to dd if fallocate fails
-                log_message "fallocate failed, using dd instead..." "$YELLOW"
-                sudo dd if=/dev/zero of=/swapfile bs=1M count=3072 status=progress
-            fi
-            check_status "Failed to create swap file"
-            
-            # Set permissions
-            sudo chmod 600 /swapfile
-            check_status "Failed to set swap file permissions"
-            
-            # Setup swap
-            sudo mkswap /swapfile
-            check_status "Failed to setup swap"
-            
-            # Enable swap
-            sudo swapon /swapfile
-            check_status "Failed to enable swap"
-            
-            # Make swap permanent
-            if ! grep -q "/swapfile" /etc/fstab; then
-                echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab
-                log_message "Swap file added to /etc/fstab for persistence" "$GREEN"
-            fi
-            
-            # Verify swap is active
-            NEW_SWAP=$(free -m | grep Swap | awk '{print $2}')
-            log_message "Swap configured successfully. Total swap: ${NEW_SWAP}MB" "$GREEN"
-            
-            # Configure swappiness for better performance
-            sudo sysctl vm.swappiness=10
-            echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf
-            log_message "Swappiness set to 10 for better performance" "$GREEN"
-        else
-            log_message "Sufficient swap already exists: ${SWAP_TOTAL}MB" "$GREEN"
-        fi
-    else
+
+    SWAP_TOTAL=$(free -m | awk '/Swap/ {print $2}')
+    SWAP_TOTAL=${SWAP_TOTAL:-0}
+
+    # Enough RAM on its own: note swap and return.
+    if [ "$TOTAL_RAM_MB" -ge 2048 ]; then
         log_message "System has sufficient RAM (${TOTAL_RAM_GB}GB)" "$GREEN"
-        
-        # Still check swap for optimal performance
-        SWAP_TOTAL=$(free -m | grep Swap | awk '{print $2}')
-        if [ $SWAP_TOTAL -eq 0 ]; then
+        if [ "$SWAP_TOTAL" -eq 0 ]; then
             log_message "No swap configured. Consider adding swap for optimal performance." "$YELLOW"
         else
             log_message "Swap configured: ${SWAP_TOTAL}MB" "$GREEN"
         fi
+        return 0
     fi
+
+    log_message "System has less than 2GB RAM. Checking swap configuration..." "$YELLOW"
+    log_message "Current swap: ${SWAP_TOTAL}MB" "$BLUE"
+
+    # Already enough swap (the margin absorbs the 3072-vs-3071 rounding): leave it be.
+    if [ "$SWAP_TOTAL" -ge "$SWAP_MIN_MB" ]; then
+        log_message "Sufficient swap already present: ${SWAP_TOTAL}MB" "$GREEN"
+        apply_swappiness
+        return 0
+    fi
+
+    log_message "Swap is low. Configuring a ${SWAP_TARGET_MB}MB swap file..." "$YELLOW"
+
+    # Check available disk space.
+    AVAILABLE_SPACE=$(df / | tail -1 | awk '{print $4}')
+    REQUIRED_SPACE=$((SWAP_TARGET_MB * 1024))  # KB
+    if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
+        log_message "Error: Not enough disk space for a ${SWAP_TARGET_MB}MB swap file" "$RED"
+        log_message "Available: ${AVAILABLE_SPACE}KB, Required: ${REQUIRED_SPACE}KB" "$RED"
+        exit 1
+    fi
+
+    # If /swapfile already exists it is almost certainly swapped on, so writing to
+    # it in place fails with "Text file busy". Turn it off and remove it first.
+    if [ -e /swapfile ]; then
+        log_message "Removing the existing /swapfile before rebuilding it..." "$BLUE"
+        sudo swapoff /swapfile 2>/dev/null || true
+        sudo rm -f /swapfile
+    fi
+
+    # Create the swap file. fallocate is fast but unsupported on some filesystems
+    # (overlay, ZFS), so fall back to dd there.
+    log_message "Creating ${SWAP_TARGET_MB}MB swap file at /swapfile..." "$BLUE"
+    if ! sudo fallocate -l "${SWAP_TARGET_MB}M" /swapfile 2>/dev/null; then
+        log_message "fallocate not available, using dd instead..." "$YELLOW"
+        sudo rm -f /swapfile
+        sudo dd if=/dev/zero of=/swapfile bs=1M count="$SWAP_TARGET_MB" status=progress
+    fi
+    check_status "Failed to create swap file"
+
+    sudo chmod 600 /swapfile
+    check_status "Failed to set swap file permissions"
+
+    sudo mkswap /swapfile
+    check_status "Failed to format swap file"
+
+    sudo swapon /swapfile
+    check_status "Failed to enable swap"
+
+    # Make swap permanent, once.
+    if ! grep -q '^/swapfile ' /etc/fstab; then
+        echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab > /dev/null
+        log_message "Swap file added to /etc/fstab for persistence" "$GREEN"
+    fi
+
+    NEW_SWAP=$(free -m | awk '/Swap/ {print $2}')
+    log_message "Swap configured successfully. Total swap: ${NEW_SWAP}MB" "$GREEN"
+    apply_swappiness
 }
 
 # Start logging
@@ -1299,6 +1320,16 @@ OPENALGO_DOMAIN="$DOMAIN"
 EOL
 sudo chmod 644 /etc/openalgo/deploy.env
 
+# Install the 'fastalgo' operator command so the client can run, stop, update and
+# clean up the server with one short word instead of long systemctl/script paths.
+# It reads /etc/openalgo/deploy.env at runtime, so it is the same file for every
+# install and needs no substitution.
+if [ -f "$OPENALGO_PATH/install/fastalgo-ctl.sh" ]; then
+    log_message "\nInstalling the 'fastalgo' command..." "$BLUE"
+    sudo install -m 755 "$OPENALGO_PATH/install/fastalgo-ctl.sh" /usr/local/bin/fastalgo
+    log_message "Run 'fastalgo help' to see the available commands." "$GREEN"
+fi
+
 # Configure SELinux for RHEL-based systems
 if [ "$OS_TYPE" = "centos" ] || [ "$OS_TYPE" = "fedora" ] || [ "$OS_TYPE" = "rhel" ] || [ "$OS_TYPE" = "amzn" ]; then
     if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" != "Disabled" ]; then
@@ -1362,8 +1393,12 @@ log_message "2. Configure your broker settings in the web interface" "$GREEN"
 log_message "3. Review the logs using: sudo journalctl -u $SERVICE_NAME" "$GREEN"
 log_message "4. Monitor the application status: sudo systemctl status $SERVICE_NAME" "$GREEN"
 
-log_message "\nUseful Commands:" "$YELLOW"
-log_message "Restart OpenAlgo: sudo systemctl restart $SERVICE_NAME" "$BLUE"
-log_message "View Logs: sudo journalctl -u $SERVICE_NAME" "$BLUE"
-log_message "Check Status: sudo systemctl status $SERVICE_NAME" "$BLUE"
+log_message "\nUseful Commands (the 'fastalgo' command wraps all of these):" "$YELLOW"
+log_message "Status:        fastalgo status" "$BLUE"
+log_message "Stop server:   fastalgo stop        (start / restart also available)" "$BLUE"
+log_message "Live logs:     fastalgo logs" "$BLUE"
+log_message "Update:        fastalgo update       (pull the latest version and restart)" "$BLUE"
+log_message "Reset broker:  fastalgo reset-broker (clear session and history, keep login)" "$BLUE"
+log_message "Change broker: fastalgo change-broker" "$BLUE"
+log_message "All commands:  fastalgo help" "$BLUE"
 log_message "View Installation Log: cat $LOG_FILE" "$BLUE"
