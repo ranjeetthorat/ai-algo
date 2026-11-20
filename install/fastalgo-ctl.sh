@@ -24,7 +24,13 @@
 
 set -euo pipefail
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; BLUE='\033[0;34m'; YELLOW='\033[1;33m'; NC='\033[0m'
+# Colour only when writing to a real terminal, so piped/ssh output (which the
+# cheatsheet uses, e.g. `ssh box 'fastalgo status'`) stays clean plain text.
+if [ -t 1 ]; then
+    RED='\033[0;31m'; GREEN='\033[0;32m'; BLUE='\033[0;34m'; YELLOW='\033[1;33m'; NC='\033[0m'
+else
+    RED=''; GREEN=''; BLUE=''; YELLOW=''; NC=''
+fi
 say()  { echo -e "${BLUE}$1${NC}"; }
 ok()   { echo -e "${GREEN}$1${NC}"; }
 warn() { echo -e "${YELLOW}$1${NC}"; }
