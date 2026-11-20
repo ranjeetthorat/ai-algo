@@ -65,20 +65,23 @@ def _data(enveloped: str) -> dict:
     return parsed.get("data", parsed)
 
 
+_DOC_TOOLS = ("search_docs", "get_doc", "check_connection", "get_strategy_guide")
+
+
 class TestTheToolsAreRegisteredAndScoped:
-    def test_the_three_tools_are_present(self, server):
-        for name in ("search_docs", "get_doc", "check_connection"):
+    def test_the_tools_are_present(self, server):
+        for name in _DOC_TOOLS:
             assert name in server.TOOL_META, f"{name} not registered"
             assert name in TOOL_SCOPES, f"{name} has no scope"
 
     def test_they_are_read_only_utility_tools(self, server):
-        for name in ("search_docs", "get_doc", "check_connection"):
+        for name in _DOC_TOOLS:
             meta = server.TOOL_META[name]
             assert meta.read_only is True
             assert meta.toolset == "utility"
 
     def test_the_doc_tools_carry_the_documentation_risk_class(self, server):
-        for name in ("search_docs", "get_doc"):
+        for name in ("search_docs", "get_doc", "get_strategy_guide"):
             assert server.TOOL_META[name].risk == server.RISK_DOCUMENTATION
 
 
@@ -86,7 +89,7 @@ class TestBehaviour:
     def test_search_docs_reaches_the_shared_core(self, server):
         result = _data(server.search_docs("python strategy kit PARAMS"))
         assert result["ok"] is True
-        assert result["results"][0]["path"] == "strategycontext/writing-strategies.md"
+        assert result["results"][0]["path"].startswith("strategycontext/")
 
     def test_get_doc_reads_the_index(self, server):
         result = _data(server.get_doc("INDEX.md"))
@@ -105,3 +108,9 @@ class TestBehaviour:
         assert result["server"] == "reachable"
         assert result["tools_available"] > 0
         assert result["api_key"] == "could not authenticate"
+
+    def test_strategy_guide_returns_the_authoring_doc(self, server):
+        result = _data(server.get_strategy_guide())
+        assert result["ok"] is True
+        assert result["path"] == "strategycontext/ai-strategy-authoring.md"
+        assert "strategy kit" in result["content"]

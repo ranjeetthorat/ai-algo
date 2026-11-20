@@ -1610,6 +1610,33 @@ def get_doc(path: str, section: str = "") -> str:
     return json.dumps(docs_search.read_doc(path, section=section), indent=2, default=str)
 
 
+@openalgo_tool(
+    'utility', title="FastAlgo Strategy Authoring Guide", open_world=False, risk=RISK_DOCUMENTATION
+)
+def get_strategy_guide() -> str:
+    """How to build a FastAlgo Python strategy: call this before writing one.
+
+    Returns the authoring guide - what to clarify with the user before writing (so
+    you ask instead of assuming), how to write the strategy on the strategy kit so
+    logging, saved state, safe orders and a clean stop are present, how the
+    settings form works, and how the user uploads and runs it. Call this first
+    whenever the user asks you to create, build or write a strategy for FastAlgo.
+
+    Returns:
+        JSON with the guide's text. Follow it, and read the references it names
+        with get_doc before writing.
+    """
+    try:
+        from services import docs_search
+    except Exception:
+        return _error("The strategy authoring guide is not available in this configuration.")
+    return json.dumps(
+        docs_search.read_doc("strategycontext/ai-strategy-authoring.md", max_chars=20000),
+        indent=2,
+        default=str,
+    )
+
+
 @openalgo_tool('utility', title="Send Telegram Alert", write=True)
 def send_telegram_alert(username: str, message: str, priority: int = 5) -> str:
     """

@@ -122,6 +122,7 @@ TOOL_SCOPES: dict[str, str] = {
     # Flow references before it generates a file.
     "search_docs": SCOPE_READ_MARKET,
     "get_doc": SCOPE_READ_MARKET,
+    "get_strategy_guide": SCOPE_READ_MARKET,
 }
 
 

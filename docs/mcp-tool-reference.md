@@ -454,6 +454,14 @@ Read one documentation file by the `path` a search returned, or `INDEX.md` for t
 
 ---
 
+### `get_strategy_guide`
+
+The authoring guide to read before building a FastAlgo Python strategy: what to clarify with the user first, how to write it on the strategy kit so logging, saved state, safe orders and a clean stop are present, and how the user uploads and runs it. The model should call this whenever asked to create a strategy.
+
+**Prompt:** *"Build me a strategy that shorts the ATM straddle with a 10% stop"*
+
+---
+
 ## Technical Research
 
 Research tools fetch broker or Historify history and calculate compact results on the OpenAlgo server. Common optional controls are `interval`, `start_date`, `end_date`, `lookback_bars`, `lookback_days`, and `source` (`api` or `db`).
