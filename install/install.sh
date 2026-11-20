@@ -328,7 +328,25 @@ case "$OS_TYPE" in
         ;;
 esac
 
-log_message "Web server user: $WEB_USER:$WEB_GROUP" "$BLUE"
+# The OS web user above is who nginx runs as.
+NGINX_USER="$WEB_USER"
+NGINX_GROUP="$WEB_GROUP"
+
+# The gunicorn service account. For the standard /var/python/openalgo install it
+# is the nginx user, which can reach a Unix socket inside the app dir. A
+# home-directory install (set OPENALGO_RUN_USER) must run as the directory's
+# owner, because nginx's user cannot traverse a 0750 home dir; that case talks to
+# gunicorn over a localhost TCP port instead of a socket (see the path block), so
+# no file-permission crossing is needed at all.
+RUN_USER="${OPENALGO_RUN_USER:-$NGINX_USER}"
+if [ "$RUN_USER" = "$NGINX_USER" ]; then
+    RUN_GROUP="$NGINX_GROUP"
+else
+    RUN_GROUP="${OPENALGO_RUN_GROUP:-$RUN_USER}"
+fi
+
+log_message "Web server user: $NGINX_USER:$NGINX_GROUP" "$BLUE"
+log_message "Service run user: $RUN_USER:$RUN_GROUP" "$BLUE"
 log_message "Python command: $PYTHON_CMD" "$BLUE"
 
 # Check system requirements (RAM and swap)
@@ -439,12 +457,30 @@ API_KEY_PEPPER=$(generate_hex)
 #   systemd unit:  openalgo.service
 #   nginx vhost:   openalgo.conf
 DEPLOY_NAME="openalgo"
-OPENALGO_PATH="/var/python/openalgo"
+OPENALGO_PATH="${OPENALGO_HOME:-/var/python/openalgo}"
 BASE_PATH="$OPENALGO_PATH"
 VENV_PATH="$OPENALGO_PATH/.venv"
-SOCKET_PATH="$OPENALGO_PATH"
-SOCKET_FILE="$SOCKET_PATH/openalgo.sock"
 SERVICE_NAME="openalgo"
+
+# How nginx reaches gunicorn.
+#   Standard install (service runs as the nginx user): a Unix socket inside the
+#   app dir — unchanged from previous releases.
+#   Home-directory install (service runs as a different user): nginx's user
+#   cannot traverse the app dir, so gunicorn listens on a localhost-only TCP port
+#   and nginx proxies to it. No socket, no file-permission crossing.
+if [ "$RUN_USER" = "$NGINX_USER" ]; then
+    USE_TCP_UPSTREAM=false
+    SOCKET_PATH="$OPENALGO_PATH"
+    SOCKET_FILE="$SOCKET_PATH/openalgo.sock"
+    GUNICORN_BIND="unix:$SOCKET_FILE"
+    NGINX_UPSTREAM="http://unix:$SOCKET_FILE"
+    DEPLOY_UPSTREAM="$SOCKET_FILE"
+else
+    USE_TCP_UPSTREAM=true
+    GUNICORN_BIND="127.0.0.1:5000"
+    NGINX_UPSTREAM="http://127.0.0.1:5000"
+    DEPLOY_UPSTREAM="127.0.0.1:5000"
+fi
 
 # Set Nginx configuration paths based on OS
 case "$OS_TYPE" in
@@ -1087,7 +1123,7 @@ server {
 
     # Socket.IO (Flask-SocketIO real-time events)
     location /socket.io/ {
-        proxy_pass http://unix:$SOCKET_FILE;
+        proxy_pass $NGINX_UPSTREAM;
         proxy_http_version 1.1;
 
         # Extended timeouts for long-lived Socket.IO sessions
@@ -1109,9 +1145,9 @@ server {
         proxy_set_header X-Forwarded-Host \$host;
     }
 
-    # Main app (Gunicorn UDS)
+    # Main app (Gunicorn — Unix socket, or localhost TCP for a home-dir install)
     location / {
-        proxy_pass http://unix:$SOCKET_FILE;
+        proxy_pass $NGINX_UPSTREAM;
         proxy_http_version 1.1;
 
         # Extended timeouts for broker authentication (cold start can take 60-90s)
@@ -1161,8 +1197,8 @@ Description=OpenAlgo Gunicorn Daemon ($DEPLOY_NAME)
 After=network.target
 
 [Service]
-User=$WEB_USER
-Group=$WEB_GROUP
+User=$RUN_USER
+Group=$RUN_GROUP
 WorkingDirectory=$OPENALGO_PATH
 # Set HOME so Kaleido/choreographer can write temp files for Telegram /chart.
 # Kaleido 1.x creates temp dirs in Path.home() (not TMPDIR); the default
@@ -1184,7 +1220,7 @@ Environment="NUMBA_NUM_THREADS=2"
 ExecStart=/bin/bash -c 'source $VENV_PATH/bin/activate && $VENV_PATH/bin/gunicorn \
     --worker-class eventlet \
     -w 1 \
-    --bind unix:$SOCKET_FILE \
+    --bind $GUNICORN_BIND \
     --timeout 300 \
     --log-level info \
     app:app'
@@ -1202,7 +1238,7 @@ check_status "Failed to create systemd service"
 log_message "\nSetting permissions..." "$BLUE"
 
 # Set permissions for base directory
-sudo chown -R $WEB_USER:$WEB_GROUP $BASE_PATH
+sudo chown -R $RUN_USER:$RUN_GROUP $BASE_PATH
 sudo chmod -R 755 $BASE_PATH
 
 # Create and set permissions for required directories
@@ -1215,7 +1251,7 @@ sudo mkdir -p $OPENALGO_PATH/strategies/examples
 sudo mkdir -p $OPENALGO_PATH/log/strategies
 sudo mkdir -p $OPENALGO_PATH/keys
 # Set ownership and permissions
-sudo chown -R $WEB_USER:$WEB_GROUP $OPENALGO_PATH
+sudo chown -R $RUN_USER:$RUN_GROUP $OPENALGO_PATH
 sudo chmod -R 755 $OPENALGO_PATH
 # Set more restrictive permissions for sensitive directories
 sudo chmod 700 $OPENALGO_PATH/keys
@@ -1224,11 +1260,13 @@ sudo chmod 700 $OPENALGO_PATH/keys
 # would otherwise leave it world-readable on shared boxes.
 sudo chmod 600 $OPENALGO_PATH/.env
 
-# Remove existing socket file if it exists
-[ -S "$SOCKET_FILE" ] && sudo rm -f $SOCKET_FILE
-
-# Ensure socket directory is accessible to nginx
-sudo chmod 755 $SOCKET_PATH
+# Unix-socket install only: clear any stale socket and make its directory
+# reachable by nginx. The home-directory install uses a localhost TCP port, so
+# there is no socket to manage here.
+if [ "$USE_TCP_UPSTREAM" = false ]; then
+    [ -S "$SOCKET_FILE" ] && sudo rm -f $SOCKET_FILE
+    sudo chmod 755 $SOCKET_PATH
+fi
 
 # Verify permissions
 log_message "\nVerifying permissions..." "$BLUE"
@@ -1242,6 +1280,24 @@ sudo systemctl enable $SERVICE_NAME
 sudo systemctl start $SERVICE_NAME
 sudo systemctl restart nginx
 check_status "Failed to start services"
+
+# Record this deployment so the ops scripts (update.sh, backup.sh,
+# change-broker.sh) find it wherever it lives, including a home directory. When
+# this file is absent those scripts fall back to discovering the standard
+# /var/python/openalgo layout, so existing installs keep working untouched.
+log_message "\nRecording deployment at /etc/openalgo/deploy.env..." "$BLUE"
+sudo mkdir -p /etc/openalgo
+sudo tee /etc/openalgo/deploy.env > /dev/null << EOL
+# Written by install.sh. Read by update.sh, backup.sh and change-broker.sh.
+# One line per deployment setting; do not add shell logic here.
+OPENALGO_PATH="$OPENALGO_PATH"
+OPENALGO_SERVICE="$SERVICE_NAME"
+OPENALGO_RUN_USER="$RUN_USER"
+OPENALGO_RUN_GROUP="$RUN_GROUP"
+OPENALGO_UPSTREAM="$DEPLOY_UPSTREAM"
+OPENALGO_DOMAIN="$DOMAIN"
+EOL
+sudo chmod 644 /etc/openalgo/deploy.env
 
 # Configure SELinux for RHEL-based systems
 if [ "$OS_TYPE" = "centos" ] || [ "$OS_TYPE" = "fedora" ] || [ "$OS_TYPE" = "rhel" ] || [ "$OS_TYPE" = "amzn" ]; then
@@ -1283,7 +1339,8 @@ log_message "Domain: $DOMAIN" "$BLUE"
 log_message "Broker: $BROKER_NAME" "$BLUE"
 log_message "Installation Directory: $OPENALGO_PATH" "$BLUE"
 log_message "Environment File: $OPENALGO_PATH/.env" "$BLUE"
-log_message "Socket File: $SOCKET_FILE" "$BLUE"
+log_message "Service Run User: $RUN_USER:$RUN_GROUP" "$BLUE"
+log_message "Gunicorn Upstream: $DEPLOY_UPSTREAM" "$BLUE"
 log_message "Service Name: $SERVICE_NAME" "$BLUE"
 log_message "Nginx Config: $NGINX_CONFIG_FILE" "$BLUE"
 log_message "SSL: Enabled with Let's Encrypt" "$BLUE"

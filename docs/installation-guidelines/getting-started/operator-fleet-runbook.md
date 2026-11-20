@@ -20,15 +20,27 @@ update and reset differ between the two. There is **no license gate on servers**
 - **You set up the account, then hand it over.** You run the install, create the
   login, connect the broker once, and give the client the URL and credentials.
 
-Paths and names used throughout (from `install/install.sh`):
+Paths and names used throughout (from `install/install.sh`). The install path is
+the **default**; you can install elsewhere (see "Installing to a custom
+location"). Wherever it lives, that one directory holds the code, the virtualenv,
+`.env`, the databases and the logs, and the chosen path is recorded in
+`/etc/openalgo/deploy.env` so every ops script finds it automatically.
 
-| Thing | Value |
+| Thing | Default value |
 |---|---|
 | Install path | `/var/python/openalgo` |
 | systemd service | `openalgo` |
-| Virtualenv | `/var/python/openalgo/.venv` |
-| Env file | `/var/python/openalgo/.env` |
-| Databases | `/var/python/openalgo/db/` |
+| Virtualenv | `<install path>/.venv` |
+| Env file | `<install path>/.env` |
+| Databases | `<install path>/db/` |
+| Logs | `<install path>/log/` |
+| Deployment record | `/etc/openalgo/deploy.env` |
+
+In the commands below, `/var/python/openalgo` is the default install path. If you
+installed somewhere else, substitute that path (for example
+`/home/ubuntu/fastalgo/install` instead of `/var/python/openalgo/install`); the
+scripts themselves read `/etc/openalgo/deploy.env` and act on the right
+deployment regardless.
 
 ## Before you provision
 
@@ -61,6 +73,35 @@ the broker is XTS, and the Remote MCP option. The installer then, unattended:
 - generates unique `APP_KEY` and `API_KEY_PEPPER`, writes `.env`
 - issues the SSL certificate and configures nginx
 - creates and starts the `openalgo` service
+
+### Installing to a custom location (e.g. a home directory)
+
+The default install path is `/var/python/openalgo`, which runs as the web user
+(`www-data`) and reaches gunicorn over a Unix socket. To install somewhere else -
+for example under the login user's home so everything sits in one place you own -
+set two environment variables when you run the installer:
+
+```bash
+sudo OPENALGO_HOME=/home/ubuntu/fastalgo OPENALGO_RUN_USER=ubuntu ./install.sh
+```
+
+- `OPENALGO_HOME` - the install directory. The code, `.venv`, `.env`, `db/` and
+  `log/` all live under it.
+- `OPENALGO_RUN_USER` - the account the service runs as. A home directory is not
+  reachable by `www-data` (it is mode `0750`), so the service must run as the
+  directory's owner. When the run user differs from the web user, the installer
+  automatically has gunicorn listen on a localhost TCP port
+  (`127.0.0.1:5000`) and points nginx at it, instead of a socket inside the home
+  directory - so there is no permission juggling and nginx still reaches the app.
+
+Everything else is identical: nginx, SSL, the systemd service and the firewall
+are all set up the same way, and the chosen path and run user are written to
+`/etc/openalgo/deploy.env`. From then on `update.sh`, `backup.sh` and
+`change-broker.sh` operate on that location with no extra flags.
+
+Nothing about security changes: the app is still reached only through nginx over
+HTTPS; the `127.0.0.1:5000` port is bound to localhost and is not exposed by the
+firewall.
 
 ### Finish the account
 
@@ -172,8 +213,41 @@ sudo chmod 600 /var/python/openalgo/.env
 sudo systemctl start openalgo
 ```
 
-(The web user is `www-data` on Ubuntu/Debian, `nginx` on RHEL/Fedora, `http` on
-Arch.)
+(The owner is the service run user: `www-data` on Ubuntu/Debian, `nginx` on
+RHEL/Fedora, `http` on Arch, for a default install - or the `OPENALGO_RUN_USER`
+you chose for a custom-location install. Check `/etc/openalgo/deploy.env`.)
+
+## Disk usage and cleanup
+
+Everything the app writes lives under the install path, so that one directory is
+all you watch. Expect roughly **1-1.2 GB** installed (code + `.git` + `.venv`),
+growing with data over time. A server needs **no Node.js** and no
+`node_modules` - the frontend ships pre-built.
+
+What grows, and what is safe to remove if a disk fills (stop the service first,
+`sudo systemctl stop openalgo`):
+
+| Path (under the install dir) | What it is | Safe to delete |
+|---|---|---|
+| `db/historify.duckdb` | Downloaded historical candles - usually the largest | Yes - re-downloads on demand |
+| `db/logs.db` | Request/traffic logs (auto-purged after 30 days) | Yes - regenerates |
+| `log/` (incl. `errors.jsonl`, `strategies/`) | Text logs and error traces | Yes - regenerates |
+| `install/logs/` | Install-time logs | Yes |
+| `db/openalgo.db` | **Main DB: login, API keys, strategies, settings** | **No - never** |
+| `db/sandbox.db`, `latency.db`, `health.db` | Sandbox and monitoring | Yes (loses that history) |
+| `.venv/` | Python runtime | No (reinstalls, but do not) |
+
+Quick reclaim (leaves the main DB untouched):
+
+```bash
+sudo systemctl stop openalgo
+cd /var/python/openalgo        # or your install path
+sudo rm -rf log/* install/logs/* db/logs.db db/historify.duckdb
+sudo systemctl start openalgo
+```
+
+`backup.sh` archives go to `/var/backups/openalgo/<deployment>/` (outside the
+install dir); prune old ones there or lower `RETENTION`.
 
 ## Troubleshooting
 
@@ -181,6 +255,7 @@ Arch.)
 sudo systemctl status openalgo
 sudo journalctl -u openalgo -n 100 --no-pager
 tail -f /var/python/openalgo/log/errors.jsonl     # one JSON object per line
+# (use your install path if not the default)
 ```
 
 ## Quick reference

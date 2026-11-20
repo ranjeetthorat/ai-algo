@@ -37,6 +37,17 @@ log_message() {
 # Discover deployments as (name|path) pairs, one per line. Simple layout first,
 # then legacy /var/python/openalgo-flask/<deploy>/openalgo.
 discover_deployments() {
+    # A deployment recorded by install.sh (any location, including a home dir)
+    # takes precedence; absent, fall back to the standard /var layout.
+    if [ -f /etc/openalgo/deploy.env ]; then
+        local recorded_path recorded_name
+        recorded_path=$(. /etc/openalgo/deploy.env; echo "$OPENALGO_PATH")
+        recorded_name=$(. /etc/openalgo/deploy.env; echo "${OPENALGO_SERVICE:-openalgo}")
+        if [ -n "$recorded_path" ] && [ -f "$recorded_path/.env" ]; then
+            echo "$recorded_name|$recorded_path"
+            return
+        fi
+    fi
     local simple="/var/python/openalgo"
     local base="/var/python/openalgo-flask"
     if [ -d "$simple/.git" ] && [ -f "$simple/.env" ]; then

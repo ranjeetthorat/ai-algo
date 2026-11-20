@@ -94,6 +94,17 @@ esac
 log_message "Detected OS: $OS_TYPE" "$BLUE"
 log_message "Python command: $PYTHON_CMD" "$BLUE"
 
+# A deployment recorded by install.sh (path, service, run user) overrides the OS
+# web-user defaults and the /var discovery below, so update works for a
+# home-directory install too. Absent, everything falls back to the standard
+# /var/python/openalgo layout and behaves exactly as before.
+if [ -f /etc/openalgo/deploy.env ]; then
+    . /etc/openalgo/deploy.env
+    WEB_USER="${OPENALGO_RUN_USER:-$WEB_USER}"
+    WEB_GROUP="${OPENALGO_RUN_GROUP:-$WEB_GROUP}"
+    log_message "Using recorded deployment: ${OPENALGO_PATH} (run user $WEB_USER)" "$GREEN"
+fi
+
 # Detect uv command
 detect_uv() {
     if command -v uv >/dev/null 2>&1; then
@@ -117,7 +128,7 @@ detect_uv() {
 #                                    by install/install-multi.sh)
 # We try the simple layout first because it's unambiguous; only fall back
 # to scanning the legacy parent dir when the simple path is absent.
-SIMPLE_PATH="/var/python/openalgo"
+SIMPLE_PATH="${OPENALGO_PATH:-/var/python/openalgo}"
 DEPLOY_BASE="/var/python/openalgo-flask"
 SERVER_MODE=false
 STASHED=false
@@ -141,7 +152,7 @@ if [ -d "$SIMPLE_PATH/.git" ] && [ -f "$SIMPLE_PATH/.env" ]; then
     BASE_PATH="$SIMPLE_PATH"
     OPENALGO_PATH="$SIMPLE_PATH"
     VENV_PATH="$SIMPLE_PATH/.venv"
-    SERVICE_NAME="openalgo"
+    SERVICE_NAME="${OPENALGO_SERVICE:-openalgo}"
 
     log_message "Found OpenAlgo install at $SIMPLE_PATH" "$GREEN"
     log_message "Service: $SERVICE_NAME" "$BLUE"

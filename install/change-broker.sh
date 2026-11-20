@@ -106,19 +106,28 @@ case "$OS_TYPE" in
 esac
 log_message "Detected OS: $OS_TYPE (web user: $WEB_USER)" "$GREEN"
 
+# A deployment recorded by install.sh overrides the OS web-user defaults and the
+# /var discovery below, so broker switch works for a home-directory install too.
+# Absent, everything falls back to the standard /var/python/openalgo layout.
+if [ -f /etc/openalgo/deploy.env ]; then
+    . /etc/openalgo/deploy.env
+    WEB_USER="${OPENALGO_RUN_USER:-$WEB_USER}"
+    WEB_GROUP="${OPENALGO_RUN_GROUP:-$WEB_GROUP}"
+fi
+
 # ============================================
 # Step 2: Discover existing deployment
 # ============================================
 # Try the simple single-install layout (current install.sh) first, then fall
 # back to the legacy /var/python/openalgo-flask/<deploy>/ tree.
-SIMPLE_PATH="/var/python/openalgo"
+SIMPLE_PATH="${OPENALGO_PATH:-/var/python/openalgo}"
 DEPLOY_BASE="/var/python/openalgo-flask"
 
 if [ -d "$SIMPLE_PATH/.git" ] && [ -f "$SIMPLE_PATH/.env" ]; then
     SELECTED_DEPLOY="openalgo"
     OPENALGO_PATH="$SIMPLE_PATH"
     VENV_PATH="$SIMPLE_PATH/.venv"
-    SERVICE_NAME="openalgo"
+    SERVICE_NAME="${OPENALGO_SERVICE:-openalgo}"
     ENV_FILE="$OPENALGO_PATH/.env"
     log_message "Found OpenAlgo install at $SIMPLE_PATH" "$GREEN"
 else
