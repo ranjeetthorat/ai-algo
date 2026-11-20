@@ -1,8 +1,8 @@
 {
-  "version": "1.6.0",
-  "url": "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/FastAlgo-1.6.0.zip",
-  "sha256": "cff7bac382914c14b9b5497620eddffd5814f92643e4c415d6274639f83a6fca",
-  "size": 13158567,
+  "version": "1.7.0",
+  "url": "https://ws6hjcbcs8y3jddy.public.blob.vercel-storage.com/FastAlgo-1.7.0.zip",
+  "sha256": "1fcc614524e8cf3b5b8d7ba7c2bfd2c1f7aacf8f6c70b7c6fa4ac56e52a6a78d",
+  "size": 13198592,
   "released": "2026-11-20",
-  "notes": "A Linux fleet-operations kit for running client servers, and a broker-connection alarm that raises a visible, audible warning on both desktop and server when the live feed drops."
+  "notes": "Use your own AI - Claude Desktop, ChatGPT, Cursor, VS Code, Antigravity - with FastAlgo: it explains the platform from the installed docs and builds strategies you upload and run, over MCP, with no provider API key to manage."
 }
