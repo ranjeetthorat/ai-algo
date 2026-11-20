@@ -1,5 +1,9 @@
 venopenalgo
 .venv/
+
+# Operator-only AWS test VM (Terraform state + SSH private key). Never commit.
+awssetup/
+
 .env
 openalgo.db
 *.db-shm
